@@ -1,0 +1,36 @@
+<!doctype html><html><head>
+  <meta charset=utf-8>
+  <title>Reference</title>
+  <link href="style.css" rel="stylesheet" type="text/css"></meta>
+
+</head><body>
+  <div id=content>
+<h1> docl</h1><p> Document and test your Lua scripts with <code>docl</code>!
+<p><dl></dl><h2> Usage</h2><p> <code><span class=string>"docl [-v] [-h] [-d OUTPUTDIR] [--lift LIFTFILE] FILES"</span></code></p><p> This will generate an documentation files
+  * <code>OUTPUTDIR<span class=operator>/</span>path.to.file.html</code> for every specified file and
+  * an <code>index.html</code> file, containing a summary.</p><p> The default OUTPUTDIR is <code>docs<span class=operator>/</span></code>.</p><p> For example the documentation of <code>src<span class=operator>/</span>plugins<span class=operator>/</span>vector.lua</code> would be placed
+ at <code>docs<span class=operator>/</span>src.plugins.vector.lua.html</code>.
+<p><dl></dl><h2> Options</h2><p><p><dl><dt id=><a href=#> -v</a></dt>
+<dd><p>    show version number
+</p></dd><dt id=><a href=#> -h</a></dt>
+<dd><p>    show this help
+</p></dd><dt id=><a href=#> -d OUTPUTDIR</a></dt>
+<dd><p>    specify a directory for the html documentation files.
+    default is <code>docs<span class=operator>/</span></code>
+</p></dd><dt id=><a href=#> --lift LIFTFILE</a></dt>
+<dd><p>    "lift" a specific file. eg. show its documentation on the index page.
+    you probably want to do that with the main file.
+</p></dd></dl><h2> Note</h2><p>  docl names the documentation of files relative to the pwd.
+  if all files to be documented are inside a specific directory, you
+  should simply <code>cd</code> (change-directory) there, before invoking <code>docl</code>.</p><p>  For example if you are at ~/ and you call</p><p>    <code>docl&nbsp;<span class=operator>/</span>home<span class=operator>/</span>james<span class=operator>/</span>my-programs<span class=operator>/</span>my-app<span class=operator>/</span>src<span class=operator>/</span>lua<span class=operator>/</span>*.lua</code></p><p>  then docl will name the output files
+  <code>home.james.my-programs.my-app.src.lua.*.lua.html</code> which is pretty dumb.</p><p>  if you want them to be called only *.lua.html simply <code>cd</code> (change the
+  directory) before invoking docl.</p><p>    <code>cd&nbsp;<span class=operator>/</span>home<span class=operator>/</span>james<span class=operator>/</span>my-programs<span class=operator>/</span>my-app;&nbsp;docl&nbsp;*.lua</code></p><p>  then docl will name the output files
+  <code>my-app.*.lua.html</code> which is pretty dumb.
+<p><dl></dl><h2> Examples</h2><p> Here are some usage examples:</p><p> <code><span class=string>"./docl *.lua"</span></code></p><p> document all .lua files in this directory</p><p> <code><span class=string>"./docl *.lua */*.lua"</span></code></p><p> document all .lua files in this directory and all subdirectories
+ (but not recursive!)</p><p> <code><span class=string>"./docl -o doc $$((find -name "</span>*.lua<span class=string>"))"</span></code></p><p> recursively document all files ending in .lua and put output into doc/
+<p><dl></dl>
+  </div><div id=navigation>
+<a href=index.html>> Index</a><h2> docl</h2><h3> Usage</h3><h3> Options</h3><li><a href=#> -v</a></li><li><a href=#> -h</a></li><li><a href=#> -d OUTPUTDIR</a></li><li><a href=#> --lift LIFTFILE</a></li><h3> Note</h3><h3> Examples</h3>
+  </div><footer style=margin-right>
+    generated with docl
+  </footer></body></html>
