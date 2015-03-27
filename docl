@@ -3,6 +3,8 @@
 --- docl
 -- Document and test your Lua scripts with 'docl'!
 --
+-- docl is available under a <a href=/docl/LICENSE.txt>MIT license</a>.
+--
 --- Usage
 -- '"docl [-v] [-h] [-d OUTPUTDIR] [--lift LIFTFILE] FILES"'
 --
