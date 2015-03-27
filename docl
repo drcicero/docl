@@ -6,14 +6,15 @@
 --- Usage
 -- '"docl [-v] [-h] [-d OUTPUTDIR] [--lift LIFTFILE] FILES"'
 --
--- This will generate an documentation files
---  * 'OUTPUTDIR/path.to.file.html' for every specified file and
---  * an 'index.html' file, containing a summary.
---
--- The default OUTPUTDIR is 'docs/'.
+-- Generate the documentation files. Creates files at
+-- 'OUTPUTDIR/path.to.file.html' for every specified file and 'index.html'
+-- file, containing a summary.
 --
 -- For example the documentation of 'src/plugins/vector.lua' would be placed
 -- at 'docs/src.plugins.vector.lua.html'.
+--
+-- The default OUTPUTDIR is 'doc'.
+--
 --
 --- Options
 -- '"-v"'
@@ -25,19 +26,21 @@
 -- '"-d OUTPUTDIR"'
 --
 --    specify a directory for the html documentation files.
---    default is 'docs/'
+--    default is 'doc'
 --
 -- '"--lift LIFTFILE"'
 --
 --    "lift" a specific file. eg. show its documentation on the index page.
 --    you probably want to do that with the main file.
 --
+--
 --- Note
 --  docl names the documentation of files relative to the working directory.
---  if all files to be documented are inside a specific directory, you
---  should simply 'cd' (change-directory) there, before invoking 'docl'.
 --
---  For example if you are at /home/james/ and you call
+--  if all files to be documented are inside a specific directory, you
+--  should 'cd' (change-directory) there, before invoking 'docl'.
+--
+--  For example if you are at '/home/james/' and you call
 --
 --    'docl my-programs/my-app/src/lua/*.lua'
 --
@@ -49,8 +52,7 @@
 --
 --    'cd /home/james/my-programs/my-app/src/lua; docl *.lua'
 --
---  then docl will name the output files 'my-app.*.lua.html' which is pretty
---  smart.
+--  then docl will name the output files '*.lua.html' which is much better.
 --
 --- Examples
 -- Here are some usage examples:
@@ -64,9 +66,9 @@
 -- document all .lua files in this directory and all subdirectories
 -- (but not recursive!)
 --
--- './docl -o doc $$((find -name "*.lua"))'
+-- './docl -d html-doc $$((find -name "*.lua"))'
 --
--- recursively document all files ending in .lua and put output into doc/
+-- recursively document all files ending in .lua and put output into 'html-doc/'
 --
 
 help = [[
@@ -76,7 +78,7 @@ NAME
 SYNOPSIS
   docl [-v] [-h] [-d OUTPUTDIR] [-lift LIFTFILE] FILES
 
-  This will create the dir OUTPUTDIR (default is 'docs/') and for every
+  This will create the dir OUTPUTDIR (default is 'doc/') and for every
   supplied file a file 'path.to.file.html' .
 
 OPTIONS
@@ -93,22 +95,31 @@ NOTE
   at file://]] .. arg[0] .. [[/html-doc/index.html.
 ]]
 
-if #arg == 0 or arg[1] == "-h" then
-  print(help)
+local function does_directory_exist(dir)
+  local f = io.open(dir .. "/index.html", "r")
+  local content = ""
+  if f then
+    content = f:read("*a")
+    f:close()
+  end
 
-elseif #arg == 0 or arg[1] == "-v" then
-  print("This docl version 1.1 - have fun!")
+  local f = io.open(dir .. "/index.html", "w")
+  if not f then
+    print("ERROR: the directory '" .. dir .. "' does not exist.")
+    print("  please create it by executing 'mkdir " .. dir .. "'")
+    return false
 
-else
-  origdir = io.popen("pwd"):read() .. "/"
-  docldir, file = arg[0]:match'(.*/)(.*)'
-  package.path = docldir .. "?.lua;" .. package.path
-  outputdir = origdir .. "docs/"
+  else 
+    f:write(content)
+    f:close()
+    return true
+  end
 
-  local doc = require "doc"
+end
 
-  -- parse shell options and arguments
-  local files, kwarg, err = {}, nil, false
+
+local function parse_shell_options ()
+  local files, kwarg = {}, nil
   for i,word in ipairs(arg) do
     if kwarg then
       if kwarg == "d" then
@@ -124,18 +135,16 @@ else
       if word:sub(1,1) == "-" then
         kwarg = word:sub(2)
         if kwarg == "h" or kwarg == "v" then
-          err = true
           print("ERROR: option '" .. kwarg .. "' has to be the only option.")
+          return {err=true}
 
         elseif kwarg == "d" then
         elseif kwarg == "-lift" then
 
         else
-          err = true
-          print("ERROR: unkown argument -" .. kwarg)
+          print("WARNING: ignoring unkown argument -" .. kwarg)
           print()
           print("Please help yourself by typing 'docl.lua -h'")
-          break
         end
 
       else
@@ -144,17 +153,46 @@ else
     end
   end
 
-  -- do your thing
-  if not err then
---    if io.open(outputdir) then
---    os.execute("mkdir -p " .. outputdir)
---    os.execute("cp -n " .. docldir .. "style.css " .. outputdir .. "/")
+  if outputdir == nil then
+    print("WARNING: missing option '-d', default is '-d doc'")
+    outputdir = "doc"
+  end
 
-      local t = {}
-      for i,file in ipairs(files) do
+  if not does_directory_exist(outputdir) then
+    return {err=true}
+  end
+
+  outputdir = outputdir .. "/"
+  return {outputdir=outputdir, files=files}
+end
+
+
+
+if #arg == 0 or arg[1] == "-h" then
+  print(help)
+
+elseif #arg == 0 or arg[1] == "-v" then
+  print("This docl version 1.1 - have fun!")
+
+else
+  local docldir, file = arg[0]:match'(.*/)(.*)'
+  local outputdir = nil
+
+  package.path = docldir .. "?.lua;" .. package.path
+  local doc = require "doc"
+
+  -- parse shell options and arguments
+  local options = parse_shell_options()
+
+  local links = {}
+
+  -- do your thing
+  if not options.err then
+      local toc = {}
+      for i,file in ipairs(options.files) do
 
         print("gen_file " .. file)
-        sections = doc.parse_file(file)
+        sections = doc.parse_file(file, links)
         result = doc.gen_file(sections)
 
         if file == liftfile then
@@ -162,12 +200,12 @@ else
 
         elseif result ~= false then
             local output = file:gsub("/", ".")
-            local f = io.open(outputdir .. "/" .. output .. ".html", "w")
+            local f = io.open(options.outputdir .. output .. ".html", "w")
             f:write(result)
             f:close()
 
-            table.insert(t, "<li><a href='" .. output .. ".html'>" .. output .. "</a><div style='margin: 0 1em 1em; font-size: .9em;'>"
-                .. (sections[1].first and sections[1].first.first or "") .. "</div></li>")
+            table.insert(toc, {"<a href='" .. output .. ".html'>" .. output .. "</a>",
+                sections[1].first and sections[1].first.first or ""})
 
         else
           print("  NO DOCS FOR " .. file)
@@ -208,13 +246,28 @@ else
         end
       end
 
-      content = content .. doc.wrap(liftfile and "Subcontent" or "Content", "h2") .. "<ul id=main-list>" .. table.concat(t) .. "</ul>"
-      navigation = navigation .. doc.wrap(liftfile and "Subcontent" or "Content", "h2") .. "<ul>" .. table.concat(t) .. "</ul>"
+      content = content .. doc.wrap(liftfile and "Modules" or "Content", "h2")
+          .. "<table></body>" .. doc.wraps(doc.map(toc, function (x) return doc.wraps(x, "td") end), "tr") .. "</tbody></table>"
 
-      local file = io.open(outputdir .. "/index.html", "w")
+      navigation = navigation .. doc.wrap(liftfile and "Modules" or "Content", "h2")
+          .. "<ul id=main-list>" .. doc.wraps(doc.map(toc, function (x) return x[1]
+              .. "<div style='margin: 0 1em 1em; font-size: .9em;'>" .. x[2] .. "</div>" end), "li") .. "</ul>"
+
+      local file = io.open(options.outputdir .. "index.html", "w")
       file:write( doc.file_template(content, navigation) )
 
       file:close()
---    end
+
+      local filestable = {}
+      for i,e2 in ipairs(options.files) do
+          filestable[e2:gsub("/", ".")] = true
+      end
+      for i,e in ipairs(links) do
+          local url, hash = e.url:match'(.*)%.html#(.*)'
+          if not filestable[url] then
+              print("ERROR in File " .. e.file .. " in line " .. e.line .. ": " .. url .. "#" .. hash)
+          end
+      end
   end
+  
 end

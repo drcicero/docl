@@ -1,10 +1,12 @@
 --- helper functions
--- Functions for comment parsing and unit testing, html generation and list
--- operations.
+-- Functions for parsing, running code samples and html generation.
 --[[
   doc = require "doc"
 ]]--@RUN
 -- See #doc.parse for how it expects your files to be written.
+
+local highlight = require "highlight"
+local repr = require "repr"
 
 local ok,res = pcall(require, "traceback")
 if ok then traceback = res end
@@ -18,10 +20,12 @@ local doc = {}
 --[[
 --- Add 2 numbers.
 -- This function the two numbers 'x' and 'y'.
--- 
--- WARNING using this function with nil will generate strange errors!
+--
+-- x: first summand
+--
+-- y: second summand
 function add(x, y)
-return x + y
+    return x + y
 end
 ]]
 --
@@ -38,7 +42,7 @@ require "math"
 -- ...
 -- rest of the file
 ]]
-function doc.parse_file (file)
+function doc.parse_file (file, links)
     local env
     local sections = {{}}
     local doccomment, doctest
@@ -58,21 +62,18 @@ function doc.parse_file (file)
         or line:sub(1, 11 + doctest.level) == "]" .. ("="):rep(doctest.level) .. "]--@EXPECT" then
 
             local ok
---            local chunk, result = loadstring(table.concat(doctest, "\n"), file)
             local chunk, result = loadstring(table.concat(doctest, "\n"), file, "bt", env)
-
             if chunk then
---              setfenv(chunk, env)
                 ok, result = xpcall(chunk, traceback or function (s) return s end)
             end
 
          -- build html output of doctest
-            local string = "<pre class=run>" .. doc.syntax_highlight(table.concat(doctest, "\n")) .. "</pre>"
+            local string = "<pre class=run>" .. highlight.highlight(table.concat(doctest, "\n")) .. "</pre>"
 
             local expected
             if line:sub(1, 11 + doctest.level) == "]" .. ("="):rep(doctest.level) .. "]--@EXPECT" then
                 expected = line:sub(13 + doctest.level)
-                string = string .. "<pre class=success>" .. doc.syntax_highlight(expected) .. "</pre>"
+                string = string .. "<pre class=success>" .. highlight.highlight(expected) .. "</pre>"
             end
 
             if not ok then
@@ -82,7 +83,7 @@ function doc.parse_file (file)
                 print()
                 result = result:gsub(".-\n", function (line)
                     if line:match("^ *=") then
-                        return doc.syntax_highlight(line):gsub("\t", "    "):gsub("  ", "&nbsp; ")
+                        return highlight.highlight(line):gsub("\t", "    "):gsub("  ", "&nbsp; ")
                     else
                         line = line:gsub("<", "&lt;")
                         if line:match("^TRACEBACK") then
@@ -94,13 +95,13 @@ function doc.parse_file (file)
                 string = string .. "<pre class=error>" .. result .. "</pre>"
 
             else
-                result = doc.repr(result)
+                result = repr.repr(result)
                 if expected ~= nil then
                     if expected ~= result then
                         print("  FAIL in line " .. tostring(doctest.firstline))
                         print("    expected: " .. expected)
                         print("    instead : " .. result)
-                        string = string .. "<pre class=fail>" .. doc.syntax_highlight(result) .. "</pre>"
+                        string = string .. "<pre class=fail>" .. highlight.highlight(result) .. "</pre>"
 
                     else
                         print("  success in line " .. tostring(i))
@@ -108,7 +109,7 @@ function doc.parse_file (file)
 
                 else
                     print("  generated in line " .. tostring(i))
-                    string = string .. "<pre class=success>" .. doc.syntax_highlight(result) .. "</pre>"
+                    string = string .. "<pre class=success>" .. highlight.highlight(result) .. "</pre>"
                 end
             end
 
@@ -118,7 +119,7 @@ function doc.parse_file (file)
 
         else
          -- merge doctest output into doccomment
-            table.insert(doccomment, doc.wrap(doc.syntax_highlight(table.concat(doctest, "\n")), "pre"))
+            table.insert(doccomment, doc.wrap(highlight.highlight(table.concat(doctest, "\n")), "pre"))
             doctest = nil -- end doctest
         end
     end
@@ -136,7 +137,7 @@ function doc.parse_file (file)
   <input id=code-folder type=checkbox>
   <label for=code-folder>View source-code</label>
   <div><pre id=folded-code style=width:inherit>
-]] .. doc.syntax_highlight(content) .. "</pre></div></div>"
+]] .. highlight.highlight(content) .. "</pre></div></div>"
             end
             sections[#sections].first = doccomment
 
@@ -168,7 +169,7 @@ function doc.parse_file (file)
 
     local function start_doccomment (line)
         if doccomment then end_doccomment("") end
-        doccomment = {first = doc.link(line)}
+        doccomment = {first = doc.link(line, links, file, i)}
     end
 
     local function start_doctest (line, level)
@@ -215,7 +216,7 @@ function doc.parse_file (file)
 
                 elseif line:sub(1,2) == "--" then
                  -- continue normal doccomment
-                    table.insert(doccomment, doc.link(line:sub(3)))
+                    table.insert(doccomment, doc.link(line:sub(3), links, file, i))
 
                 else
                     end_doccomment(line)
@@ -295,74 +296,6 @@ end
 --end
 
 ---- HTML-generators
---- Wrap corresponding parts of Lua-Code with HTML-Spans of the classes
--- 'comment', 'string', 'escape', 'operator' and 'keyword'. Does not really
--- work with multiline comments or multiline strings, everything else should
--- be fine.
---[=[
-return doc.syntax_highlight( [[
-   function get(table, key)
-       return table[key]
-   end
-]] )
-]=]--@RUN
-function doc.syntax_highlight(string)
-    local inserts = {}
-
-    local function wrapclass(class) return function(x, y)
-        if not y then y = "" end
-        table.insert(inserts, "<span class=" .. class .. ">" .. x .. "</span>")
-        return "$" .. #inserts .. ";" .. y
-    end end
-
-    local function suspend(x)
-        table.insert(inserts, x)
-        return "$" .. #inserts .. ";"
-    end
-
-    return (string
-        :gsub("<", "&lt;") .. "<")
-        :gsub("\n", "<br>")
-
-        :gsub("%$", suspend)
---        :gsub("%$.-;", suspend)
-
-        :gsub("\\\\", suspend)
-        :gsub('\\["\']', wrapclass("escape"))
---        :gsub("(<br>%-%-.-)([\n<])", wrapclass("comment"))
-        :gsub("'.-'", wrapclass("string")):gsub('".-"', wrapclass("string"))
-        :gsub("(%-%-.-)([\n<])", wrapclass("comment"))
-
---        :gsub("(%d+)([^;])", wrapclass("number"))
-
-        :gsub("[=()#[%]+-*/{}]", wrapclass("operator"))
-
-        :gsub("(elseif)([ \n<])", wrapclass("keyword"))
-        :gsub("(do)([ \n<])", wrapclass("keyword"))
-        :gsub("(in)([ \n<])", wrapclass("keyword"))
-        :gsub("(if)([ \n<])", wrapclass("keyword"))
-        :gsub("(for)([ \n<])", wrapclass("keyword"))
-        :gsub("(end)([ \n<])", wrapclass("keyword"))
-        :gsub("(else)([ \n<])", wrapclass("keyword"))
-        :gsub("(then)([ \n<])", wrapclass("keyword"))
-        :gsub("(break)([ \n<])", wrapclass("keyword"))
-        :gsub("(until)([ \n<])", wrapclass("keyword"))
-        :gsub("(local)([ \n<])", wrapclass("keyword"))
-        :gsub("(while)([ \n<])", wrapclass("keyword"))
-        :gsub("(return)([ \n<])", wrapclass("keyword"))
-        :gsub("(function)([ \n<])", wrapclass("keyword"))
-
-
-        :gsub(" ", "&nbsp;")
-
-        :gsub("$(.-);", function (x) return inserts[tonumber(x)] end)
-        :gsub("$(.-);", function (x) return inserts[tonumber(x)] end)
-
-        :sub(1, -2)
-
--- debugging
---        .. "</pre>" .. doc.wraps(doc.map(inserts, function (x) return "------<br>" .. x end ), "p")
-end
 
 local max_id = 0
 function generate_id()
@@ -374,7 +307,7 @@ end
 -- string 'dd'. 'dt' must contain a space.
 --[[
 return doc.def_template("Fish (Animal)", "Fish (from latin fishius) is a animal commonly found in water.")
-]]
+]]--@RUN
 function doc.def_template(dt, dd)
     local id = dt:sub(1, (dt:find(" ") or 1)-1)
     return "<dt id=" .. id .. ">" .. "<a href=#" .. id .. ">" .. dt .. "</a>" .. "</dt>\n<dd>" .. dd .. "</dd>"
@@ -402,18 +335,14 @@ function doc.file_template(content, navigation)
 end
 
 --- Link #path.to.something for local references and $path.to.something for references to other files.
-function doc.link (string)
+function doc.link (string, links, file, line)
     local alphanum = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVVWXYZ0123456789"
     local result = string
         :gsub("'(.-)'", function (code)
-            return doc.wrap(doc.syntax_highlight(code), "code")
+            return doc.wrap(highlight.highlight(code), "code")
         end)
 
-        :gsub("$([" .. alphanum .. "_./#]*)", function (path)
-            if path == "" then
-                return "$"
-            end
-
+        :gsub("$([" .. alphanum .. "_./#]+)", function (path)
             local end_ = ""
             if path:sub(-1) == "." or path:sub(-1) == "/" then
                 path = path:sub(1, -2)
@@ -421,6 +350,7 @@ function doc.link (string)
             end
             local point = path:find("#") or #path+1
             local link = path:sub(1, point-1) .. ".lua.html#" .. path:sub(point+1)
+            table.insert(links, {url=link, file=file, line=line})
             return "<a href=" .. link .. ">" .. path .. "</a>" .. end_
         end)
 
@@ -470,73 +400,14 @@ end
 
 -- Replace every element of list with its key-property.
 --[[
---return doc.pluck("name", {
---    {name="Frank", age=25},
---    {name="Josefine", mail="josefine@example.com"},
---    {name="Adalbert", friends={"Frank", "Josefine"}, age=61}
---}, ", ")
---]]--@EXPECT {"Adalbert", "Frank", "Josefine"}
---function doc.pluck(key, list)
---    return doc.map(list, function(elem)
---        return elem[key]
---    end)
+--]]--@RUN
+--function partial(func, ...)
+--    local args = {...}; local len = #args
+--    return function(...)
+--        local params = {unpack(args)}                      -- copy
+--        for i,e in ipairs {...} do params[len + i] = e end -- merge
+--        return func(unpack(params))                        -- apply
+--    end
 --end
-
-local function key_repr(value)
-    if type(value) == "string" then
-        if value:match("%l%w*") then
-            return value
-        else
-            return "[" + doc.repr(value) + "]"
-        end
-    else
-        return tostring(value)
-    end
-end
-
---- Almost serialisation ;)
---
--- like python's repr function.
---[[
-return doc.repr(nil)
-]]--@EXPECT "nil"
---[[
-return doc.repr(1)
-]]--@EXPECT "1"
---[[
-return doc.repr "teststring"
-]]--@EXPECT "\"teststring\""
---[[
-return doc.repr {1, 2, b=7, 3, a=6,}
-]]--@EXPECT "{1, 2, 3, a=6, b=7}"
---[[
-return doc.repr(function () end)
-]]
-function doc.repr(value)
-    if type(value) == "table" then
-        local t = {}
-        for k,v in ipairs(value) do
-            t[#t+1] = doc.repr(v)
-        end
-        local len = #t
-        for k,v in pairs(value) do
-            if type(k) ~= "number" or k > len then
-                t[#t+1] = key_repr(k) .."=".. doc.repr(v)
-            end
-        end
-        table.sort(t)
-        return "{" .. table.concat(t, ", ") .. "}"
-
-    elseif type(value) == "string" then
---        if value:find("\\n") == nil then
-            return ("%q"):format(value)
---        else
---            return "[[" .. value .. "]]"
---        end
-
-    else
-        return tostring(value)
-    end
-end
 
 return doc

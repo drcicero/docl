@@ -15,9 +15,13 @@ dt:target + * { border-left: yellow 5px solid; margin-left: 15px; }
 
 blockquote { margin-left: 3em; }
 
+table {border-spacing: 0; width:100%}
+td {padding: .5em 0;}
+tr:hover {background-color: #eed}
+
 /* layout */
 #navigation { position: fixed; top: 1em; bottom: 1em;
-    overflow-y: auto; padding-top: 1em; width: 16em; border: 1px dotted silver; }
+    overflow-y: scroll; padding-top: 1em; width: 16em; }
 #navigation h2, #navigation h3 { margin: 0 .8em; margin-top: 1em; }
 #navigation h2 { margin-bottom: 1em; font-size: 1em; }
 #navigation h3 { border-bottom: 1px dotted #ddd; font-size: .9em; }
@@ -37,20 +41,19 @@ code { padding: .2em; font-family: monospace;
     background-color: #eed; color:#555; }
 pre br { margin-bottom: .2em }
 pre { display: inline-block; padding: 1em; margin: 0 1em 1em 0;
-    vertical-align: top; width: calc(100% - 3em); overflow: auto;
-    font-family: monospace; white-space: normal;
+    vertical-align: top; overflow: auto;
+    font-family: monospace; width: calc(100% - 2em); white-space: normal;
     background-color: #eed; color:#555; }
+pre.run { width: calc(60% - 3em); }
+pre.success { width: calc(40% - 3em); }
+pre.fail { width: calc(100% - 3em); }
+pre.error { width: calc(100% - 3em); }
 pre::before { content: "Code"; display: block;
     position: relative; top: -.25em;
     font-family: sans-serif; color: black; }
-pre.run { width: calc(60% - 3em); }
-pre.run { width: calc(60% - 3em); }
-pre.success { width: calc(40% - 3em); }
 pre.success::before {content:"Result"}
-pre.fail { width: calc(100% - 3em); }
-pre.fail::before {content:"This was returned instead"; color:red;}
-pre.error { width: calc(100% - 3em); }
 pre.error::before {content:"Oops, there was an error"; color:red;}
+pre.fail::before {content:"This was returned instead"; color:red;}
 
 /* syntax highlighting */
 .comment { color: blue; }
@@ -69,10 +72,12 @@ pre.error::before {content:"Oops, there was an error"; color:red;}
 }
 
 /* toggle */
-.turnable {background: #eed}
+.turnable { }
 .turnable > input { position: absolute; left: -9999px; }
-.turnable > label { background: #bce; display: block; cursor: pointer; position: relative;
-    padding: .5em 1em; margin: 0; }
-.turnable > div { height: 0; overflow: hidden; transition: height 1s, padding 1s; padding: 0 1em; }
+.turnable > label { border: 1px solid #eee;
+    display: block; cursor: pointer; position: relative;
+    padding: .5em 1em; margin: 0; text-align: right; }
+.turnable > div { background: #eed; height: 0; overflow: hidden;
+    transition: height 1s, padding 1s; padding: 0 1em; }
 .turnable > input:hover + label { color: #0ad; }
 .turnable > input:checked ~ div { height: auto; padding: 1em 1em; }
