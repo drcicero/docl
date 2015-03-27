@@ -42,7 +42,7 @@ require "math"
 -- ...
 -- rest of the file
 ]]
-function doc.parse_file (file, links)
+function doc.parse_file (file, links, SHOW_SOURCECODE)
     local env
     local sections = {{}}
     local doccomment, doctest
@@ -128,7 +128,7 @@ function doc.parse_file (file, links)
         if not sections[#sections].first then
             -- the first doccomment is the file/section-description
             -- ignores line
-            if #sections == 1 then
+            if SHOW_SOURCECODE and #sections == 1 then
                 local f = io.open(file, "r")
                 local content = f:read("*a")
                 f:close()

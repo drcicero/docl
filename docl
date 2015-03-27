@@ -26,14 +26,17 @@
 --    show a short help
 --
 -- '"-d OUTPUTDIR"'
---
 --    specify a directory for the html documentation files.
 --    default is 'doc'
 --
 -- '"--lift LIFTFILE"'
---
 --    "lift" a specific file. eg. show its documentation on the index page.
 --    you probably want to do that with the main file.
+--
+-- '"--show-source true"' '"--show-source false"'
+--    include a button on every page to show the source of the documentation.
+--    may be usefull, if some algorithms are easier to describe in code then
+--    in words.
 --
 --
 --- Note
@@ -130,6 +133,16 @@ local function parse_shell_options ()
       elseif kwarg == "-lift" then
         liftfile = word
         files[#files+1] = word
+
+      elseif kwarg == "-show-source" then
+        if word == "true" then
+          options.show_source = true
+        elseif word == "false"
+          options.show_source = false
+        else
+          print("ERROR: unknown option --show-source '" .. word .. "')
+          print("expected 'true' or 'false'")
+        end
       end
       kwarg = nil
 
@@ -142,6 +155,7 @@ local function parse_shell_options ()
 
         elseif kwarg == "d" then
         elseif kwarg == "-lift" then
+        elseif kwarg == "-show-source" then
 
         else
           print("WARNING: ignoring unkown argument -" .. kwarg)
@@ -158,6 +172,11 @@ local function parse_shell_options ()
   if outputdir == nil then
     print("WARNING: missing option '-d', default is '-d doc'")
     outputdir = "doc"
+  end
+
+  if options.show_source == nil then
+    print("WARNING: missing option '--show-source' / '--hide-source', default is '--show-source'")
+    options.show_source = true
   end
 
   if not does_directory_exist(outputdir) then
@@ -190,86 +209,86 @@ else
 
   -- do your thing
   if not options.err then
-      local toc = {}
-      for i,file in ipairs(options.files) do
+    local toc = {}
+    for i,file in ipairs(options.files) do
 
-        print("gen_file " .. file)
-        sections = doc.parse_file(file, links)
-        result = doc.gen_file(sections)
+      print("gen_file " .. file)
+      sections = doc.parse_file(file, links, options.show_source)
+      result = doc.gen_file(sections)
 
-        if file == liftfile then
-          theliftfile = {sections=sections, result=result}
+      if file == liftfile then
+        theliftfile = {sections=sections, result=result}
 
-        elseif result ~= false then
-            local output = file:gsub("/", ".")
-            local f = io.open(options.outputdir .. output .. ".html", "w")
-            f:write(result)
-            f:close()
+      elseif result ~= false then
+        local output = file:gsub("/", ".")
+        local f = io.open(options.outputdir .. output .. ".html", "w")
+        f:write(result)
+        f:close()
 
-            table.insert(toc, {"<a href='" .. output .. ".html'>" .. output .. "</a>",
-                sections[1].first and sections[1].first.first or ""})
+        table.insert(toc, {"<a href='" .. output .. ".html'>" .. output .. "</a>",
+            sections[1].first and sections[1].first.first or ""})
 
-        else
-          print("  NO DOCS FOR " .. file)
+      else
+        print("  NO DOCS FOR " .. file)
+      end
+    end
+
+
+    local content, navigation = "", ""
+
+    if theliftfile then
+      for i, section in ipairs(theliftfile.sections) do
+        local description = theliftfile.sections[i].first or {}
+        local title = description.first
+
+        local function content_template(section)
+          return doc.wrap(
+            table.concat(doc.map(section, function(def)
+              return doc.def_template(def.first, "<p>"..table.concat(def, "\n"):gsub("\n\n", "</p><p>").."</p>" ) end
+            ))
+          , "dl")
         end
-      end
-
-
-      local content, navigation = "", ""
-
-      if theliftfile then
-        for i, section in ipairs(theliftfile.sections) do
-            local description = theliftfile.sections[i].first or {}
-            local title = description.first
-
-            local function content_template(section)
-                return doc.wrap(
-                    table.concat(doc.map(section, function(def)
-                        return doc.def_template(def.first, "<p>"..table.concat(def, "\n"):gsub("\n\n", "</p><p>").."</p>" ) end
-                    ))
-                , "dl")
-            end
-            local function nav_template(section)
-                return doc.wraps(
-                    doc.map(section, function(x)
-                        return "<a href=#" .. x.first:sub(1, (x.first:find(" ") or 1)-1) .. ">" .. x.first .. "</a>"
-                    end)
-                , "li")
-            end
-
-            content = content
-                .. doc.wrap(title, i==1 and "h1" or "h2")
-                .. "<p>"..table.concat(description, "\n"):gsub("\n\n", "</p><p>").."<p>"
-                .. content_template(section)
-
-            navigation = navigation
-                .. doc.wrap(title, i==1 and "h2" or "h3")
-                .. nav_template(section)
+        local function nav_template(section)
+          return doc.wraps(
+            doc.map(section, function(x)
+              return "<a href=#" .. x.first:sub(1, (x.first:find(" ") or 1)-1) .. ">" .. x.first .. "</a>"
+            end)
+          , "li")
         end
+
+        content = content
+          .. doc.wrap(title, i==1 and "h1" or "h2")
+          .. "<p>"..table.concat(description, "\n"):gsub("\n\n", "</p><p>").."<p>"
+          .. content_template(section)
+
+        navigation = navigation
+          .. doc.wrap(title, i==1 and "h2" or "h3")
+          .. nav_template(section)
       end
+    end
 
-      content = content .. doc.wrap(liftfile and "Modules" or "Content", "h2")
-          .. "<table></body>" .. doc.wraps(doc.map(toc, function (x) return doc.wraps(x, "td") end), "tr") .. "</tbody></table>"
+    content = content .. doc.wrap(liftfile and "Modules" or "Content", "h2")
+      .. "<table></body>" .. doc.wraps(doc.map(toc, function (x) return doc.wraps(x, "td") end), "tr") .. "</tbody></table>"
 
-      navigation = navigation .. doc.wrap(liftfile and "Modules" or "Content", "h2")
-          .. "<ul id=main-list>" .. doc.wraps(doc.map(toc, function (x) return x[1]
-              .. "<div style='margin: 0 1em 1em; font-size: .9em;'>" .. x[2] .. "</div>" end), "li") .. "</ul>"
+    navigation = navigation .. doc.wrap(liftfile and "Modules" or "Content", "h2")
+      .. "<ul id=main-list>" .. doc.wraps(doc.map(toc, function (x) return x[1]
+        .. "<div style='margin: 0 1em 1em; font-size: .9em;'>" .. x[2] .. "</div>" end), "li") .. "</ul>"
 
-      local file = io.open(options.outputdir .. "index.html", "w")
-      file:write( doc.file_template(content, navigation) )
+    local file = io.open(options.outputdir .. "index.html", "w")
+    file:write( doc.file_template(content, navigation) )
 
-      file:close()
+    file:close()
 
-      local filestable = {}
-      for i,e2 in ipairs(options.files) do
-          filestable[e2:gsub("/", ".")] = true
+    local filestable = {}
+    for i,e2 in ipairs(options.files) do
+      filestable[e2:gsub("/", ".")] = true
+    end
+    for i,e in ipairs(links) do
+      local url, hash = e.url:match'(.*)%.html#(.*)'
+      if not filestable[url] then
+        print("ERROR in File " .. e.file .. " in line " .. e.line .. ": " .. url .. "#" .. hash)
       end
-      for i,e in ipairs(links) do
-          local url, hash = e.url:match'(.*)%.html#(.*)'
-          if not filestable[url] then
-              print("ERROR in File " .. e.file .. " in line " .. e.line .. ": " .. url .. "#" .. hash)
-          end
-      end
+    end
   end
   
 end
