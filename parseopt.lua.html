@@ -1,0 +1,24 @@
+<!doctype html><html><head>
+  <meta charset=utf-8>
+  <title>Reference</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+
+</head><body>
+  <div id=content>
+<h1> Simple shell parsing</h1><p> A <code>option-defaults</code> table is a table of shell options where "-" is substituted
+ for "_" as keys, and any other value as a default as values where opt.empty
+ means no default.</p><p> Example:
+<pre class=run>opt<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;require<wbr>&nbsp;<span class=string>"parseopt"</span><br>defaults<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;<span class=operator>{</span><br><wbr>&nbsp;<wbr>&nbsp;_v<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;opt.empty,<br><wbr>&nbsp;<wbr>&nbsp;_h<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;opt.empty,<br><wbr>&nbsp;<wbr>&nbsp;_q<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;opt.empty,<br><wbr>&nbsp;<wbr>&nbsp;__out<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;<span class=string>"a.out"</span>,<br><wbr>&nbsp;<wbr>&nbsp;__temp_dir<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;<span class=string>"tmp"</span>,<br><span class=operator>}</span></pre><pre class=success>nil</pre><p><dl><dt id=><a href=#> M.empty</a></dt>
+<dd><p> the value meaning <code>no<wbr>&nbsp;default</code></p></dd><dt id=M.parse><a href=#M.parse>M.parse (args, defaults)</a></dt>
+<dd><p> Parse a list of options into a lua table.</p><p> returns <code>nil</code>, as soon as any option that is not in the <code>options<wbr>&nbsp;table</code> is
+ encounted.</p><p> else, returns a table whose dict part contains:</p><p> * an entry <code>key<span class=operator>=</span>value</code> for every <code>--key</code> and a subsequent value, and</p><p> * an entry <code>option<span class=operator>=</span>true</code> for every <code>-option</code>.</p><p> the other elements are stored in the array part of the table.
+<pre class=run><span class=comment>--<wbr>&nbsp;when<wbr>&nbsp;parsing<wbr>&nbsp;a<wbr>&nbsp;command<wbr>&nbsp;args<wbr>&nbsp;use<wbr>&nbsp;the<wbr>&nbsp;<span class=string>'args'</span><wbr>&nbsp;lua<wbr>&nbsp;special<wbr>&nbsp;variable</span><br><span class=comment>--<wbr>&nbsp;<wbr>&nbsp;<wbr>&nbsp;<span class=string>'opt.parse(args,<wbr>&nbsp;defaults)'</span></span><br><span class=comment>--<wbr>&nbsp;but<wbr>&nbsp;this<wbr>&nbsp;is<wbr>&nbsp;not<wbr>&nbsp;the<wbr>&nbsp;command<wbr>&nbsp;line,<wbr>&nbsp;so<wbr>&nbsp;we<wbr>&nbsp;use<wbr>&nbsp;our<wbr>&nbsp;own<wbr>&nbsp;args-list</span><br><span class=keyword>return</span><wbr>&nbsp;opt.parse<span class=operator>(</span><span class=operator>{</span><span class=string>"hello.c"</span>,<wbr>&nbsp;<span class=string>"-q"</span>,<wbr>&nbsp;<span class=string>"you.c"</span>,<br><wbr>&nbsp;<wbr>&nbsp;<wbr>&nbsp;<wbr>&nbsp;<span class=string>"fish.c"</span>,<wbr>&nbsp;<span class=string>"--out"</span>,<wbr>&nbsp;<span class=string>"hello"</span>,<wbr>&nbsp;<span class=string>"--temp-dir"</span>,<wbr>&nbsp;<span class=string>"/home/me/tmp"</span><span class=operator>}</span>,<wbr>&nbsp;defaults<span class=operator>)</span></pre><pre class=success><span class=operator>{</span><span class=string>"fish.c"</span>,<wbr>&nbsp;<span class=string>"hello.c"</span>,<wbr>&nbsp;<span class=string>"you.c"</span>,<wbr>&nbsp;__out<span class=operator>=</span><span class=string>"hello"</span>,<wbr>&nbsp;__temp_dir<span class=operator>=</span><span class=string>"/home/me/tmp"</span>,<wbr>&nbsp;_q<span class=operator>=</span>true<span class=operator>}</span></pre></p></dd><dt id=M.apply_defaults><a href=#M.apply_defaults>M.apply_defaults (options, defaults, warn)</a></dt>
+<dd><p> apply the defaults of the <code>options<wbr>&nbsp;table</code> (see above) into the options
+ table. warn on using defaults if <code>warn</code> is <code>true</code>. returns nothing.</p></dd></dl>
+  </div><div id=navigation>
+<a href=index.html>> Index</a><h2> Simple shell parsing</h2><a class=func-link href=#> M.empty</a>
+<a class=func-link href=#M.parse>M.parse (args, defaults)</a>
+<a class=func-link href=#M.apply_defaults>M.apply_defaults (options, defaults, warn)</a>
+  </div><footer style=margin-right>
+    generated with docl
+  </footer></body></html>
