@@ -120,84 +120,87 @@ local function handle_shell_options ()
   return options -- success
 end
 
-  -- parse shell options and arguments
-  local options = handle_shell_options()
 
-  -- do your thing
-  if options then
-    local links = {}
-    local toc = {}
-    local theliftfile
 
-    for i, file in ipairs(options) do
-      print("* " .. file)
-      local sections = doc.parse_file(file, links, options.__show_source)
-      local result = doc.gen_file(sections)
+-- parse shell options and arguments
+local options = handle_shell_options()
 
-      if file == options.__lift then
-        theliftfile = {sections=sections, result=result}
+-- do your thing
+if options then
+  local links = {}
+  local toc = {}
+  local theliftfile
 
-      elseif result ~= false then
-        local path = file:gsub("/", ".")
-        local f = io.open(options.__dir .. path .. ".html", "w")
-        f:write(result)
-        f:close()
+  for i, file in ipairs(options) do
+    print("* " .. file)
+    local sections = doc.parse_file(file, links, options.__show_source)
+    local result = doc.gen_file(sections)
 
-        local desc = sections[1].first and sections[1].first.first or ""
-        table.insert(toc, {path, desc})
-
-      else
-        print("  NO DOCS FOR " .. file)
-      end
-    end
-    if not theliftfile then
-      local sections = doc.parse_file(file, links, options.__show_source)
-      local result = doc.gen_file(sections)
+    if file == options.__lift then
       theliftfile = {sections=sections, result=result}
-    end
 
+    elseif result ~= false then
+      local path = file:gsub("/", ".")
+      local f = io.open(options.__dir .. path .. ".html", "w")
+      f:write(result)
+      f:close()
 
-    local content, navigation = "", ""
+      local desc = sections[1].first and sections[1].first.first or ""
+      table.insert(toc, {path, desc})
 
-    if theliftfile then
-      for i, section in ipairs(theliftfile.sections) do
-        local description = theliftfile.sections[i].first or {}
-        local title = description.first
-
-        content = content
-          .. doc.wrap(title, i==1 and "h1" or "h2")
-          .. "<p>"..table.concat(description, "\n"):gsub("\n\n", "</p><p>").."<p>"
-          .. doc.content_template(section)
-
-        navigation = navigation
-          .. doc.wrap(title, i==1 and "h2" or "h3")
-          .. doc.nav_template(section)
-      end
-    end
-
-    htmltoc = doc.wrap(options.__lift and "Modules" or "Content", "h2")
-      .. doc.wrap(table.concat(doc.map(toc, function (x) return
-          ("<li><a class=list-link href='%s.html'><div>%s</div><div>%s</div></a></li>")
-            :format(x[1], x[1], x[2])
-        end), "\n  "),
-        "ul style=list-style:none;padding:0", " id=content-list")
-
-    content = content .. htmltoc
-    navigation = navigation .. htmltoc
-
-    local file = io.open(options.__dir .. "index.html", "w")
-    file:write( doc.file_template(content, navigation) )
-
-    file:close()
-
-    local filestable = {}
-    for i,e2 in ipairs(options) do
-      filestable[e2:gsub("/", ".")] = true
-    end
-    for i,e in ipairs(links) do
-      local url, hash = e.url:match'(.*)%.html#(.*)'
-      if not filestable[url] then
-        print("WARNING: broken link in file " .. e.file .. ":" .. e.line .. " to " .. url .. "#" .. hash)
-      end
+    else
+      print("  NO DOCS FOR " .. file)
     end
   end
+  if not theliftfile then
+    local sections = doc.parse_file(file, links, options.__show_source)
+    local result = doc.gen_file(sections)
+    theliftfile = {sections=sections, result=result}
+  end
+
+
+  local content, navigation = "", ""
+
+  if theliftfile then
+    for i, section in ipairs(theliftfile.sections) do
+      local description = theliftfile.sections[i].first or {}
+      local title = description.first
+
+      content = content
+        .. doc.wrap(title, i==1 and "h1" or "h2")
+        .. "<p>"..table.concat(description, "\n"):gsub("\n\n", "</p><p>").."<p>"
+        .. doc.content_template(section)
+
+      navigation = navigation
+        .. doc.wrap(title, i==1 and "h2" or "h3")
+        .. doc.nav_template(section)
+    end
+  end
+
+  htmltoc = doc.wrap(options.__lift and "Modules" or "Content", "h2")
+    .. doc.wrap(table.concat(doc.map(toc, function (x) return
+        ("<li><a class=list-link href='%s.html'><div>%s</div><div>%s</div></a></li>")
+          :format(x[1], x[1], x[2])
+      end), "\n  "),
+      "ul style=list-style:none;padding:0", " id=content-list")
+
+  content = content .. htmltoc
+  navigation = navigation .. htmltoc
+
+  local file = io.open(options.__dir .. "index.html", "w")
+  file:write( doc.file_template(content, navigation) )
+
+  file:close()
+
+  local filestable = {}
+  for i,e2 in ipairs(options) do
+    filestable[e2:gsub("/", ".")] = true
+  end
+  for i,e in ipairs(links) do
+    local url, hash = e.url:match'(.*)%.html#(.*)'
+    if not filestable[url] then
+      print("WARNING: broken link in file " .. e.file .. ":" .. e.line .. " to " .. url .. "#" .. hash)
+    end
+  end
+end
+

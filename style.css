@@ -1,23 +1,26 @@
-body { font: 1em/1.25 sans; font-weight: lighter; color: #444; background: #fffff8;
+body { font: 1em/1.25 sans; font-weight: lighter;
+    color: #444; background: #fffff8;
     max-width: 1000px; margin: auto; }
 p {margin: .6em 0;}
 
-a:link { font-weight: normal; color: #0ad; text-decoration: none; }
+a { font-weight: normal; color: #0ad; text-decoration: none; }
 a:visited { color: #a0d; text-decoration: none; }
-a:link:hover { text-decoration: none; color: #0da; }
+a:hover { text-decoration: none; color: #0da; }
 
-ul { list-style-type: none; margin: 0; padding: 0; }
 dt { border-bottom: 1px dotted #ddd; margin-left: 10px;
     font-family: monospace; font-size: 1.3em; }
 dd { padding-left: 20px; margin-left: 20px; margin-bottom: 1.5em; }
 dt:target { background-color: yellow; }
 dt:target + * { border-left: yellow 5px solid; margin-left: 15px; }
 
-blockquote { margin-left: 3em; }
-
-table {border-spacing: 0; width:100%}
-td {padding: .5em 0;}
-tr:hover {background-color: #eed}
+.func-link { display: block; padding: .2em 1em; font-family: monospace; }
+#navigation a { display: block; padding: .2em 1em; }
+.list-link { display: block; }
+.list-link > div:nth-child(2) { font: 1em/1.25 sans; font-weight: lighter; color: #444; }
+.list-link:hover, #navigation a:hover { background-color: #eed; }
+#content .list-link { padding: .5em; }
+#navigation .list-link > div:nth-child(2) { margin: 0 0 .5em 2em; }
+#content .list-link > div {width: 40%; display: inline-block;}
 
 /* layout */
 #navigation { position: fixed; top: 1em; bottom: 1em;
@@ -25,9 +28,6 @@ tr:hover {background-color: #eed}
 #navigation h2, #navigation h3 { margin: 0 .8em; margin-top: 1em; }
 #navigation h2 { margin-bottom: 1em; font-size: 1em; }
 #navigation h3 { border-bottom: 1px dotted #ddd; font-size: .9em; }
-#navigation a { display: block; padding: .2em 1em;
-    font-family: monospace; font-size: 1em; }
-#navigation a:hover { background-color: #eee; }
 
 #content { margin-left: 18em; padding: 1em; }
 #content h1 { font-size: 1.3em; }
