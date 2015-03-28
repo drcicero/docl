@@ -79,9 +79,9 @@ function M.apply_defaults(options, defaults, warn)
   for k,v in pairs(defaults) do
     if v ~= M.empty and options[k] == nil then
       if warn then
-        print("WARNING: '"..k:gsub("_", "-").."' defaults to '"..v.."'")
+        print("Info: '"..k:gsub("_", "-").."' defaults to '"..v.."'")
       end
-      options[k] = "doc"
+      options[k] = v
     end
   end
 end

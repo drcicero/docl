@@ -1,5 +1,4 @@
 --- Readable tostring
--- provides the 'repr' function below.
 --[[
 repr = (require "repr").repr
 ]]--@RUN
@@ -27,10 +26,10 @@ return repr(1)
 ]]--@EXPECT "1"
 --[[
 return repr "test string"
-]]--@EXPECT "\"test string\""
+]]--@RUN "\"test string\""
 --[[
 return repr {1, 2, b=7, 3, a=6,}
-]]--@EXPECT "{1, 2, 3, a=6, b=7}"
+]]--@RUN "{1, 2, 3, a=6, b=7}"
 --[[
 return repr(function () end)
 ]]--@RUN

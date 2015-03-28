@@ -131,9 +131,9 @@ function doc.parse_file (file, links, SHOW_SOURCECODE)
         local function end_doccomment (line)
             -- the first doccomment is the section-description
             if not sections[#sections].first then
---                if SHOW_SOURCECODE and #sections == 1 then
---                    table.insert(doccomment, doc.source_template(file))
---                end
+                if SHOW_SOURCECODE and #sections == 1 then
+                    table.insert(doccomment, doc.source_template(file))
+                end
                 sections[#sections].first = doccomment
 
             else -- try a function-description
@@ -214,7 +214,7 @@ function doc.parse_file (file, links, SHOW_SOURCECODE)
 end
 
 --- Generate documentation and run unit tests for list of sections.
-function doc.gen_file (sections)
+function doc.gen_file (sections, suffix)
 --    if not sections[1].first then sections[1].first = {first="Reference"} end
 
     local content, navigation = "", "<a href=index.html>> Index</a>"
@@ -234,7 +234,8 @@ function doc.gen_file (sections)
 
 
     if content ~= "<h1>Reference</h1><p><p><dl></dl>" then
-      return doc.file_template(content, navigation)
+      local title = sections[1].first and sections[1].first.first or file
+      return doc.file_template(content, navigation, title .. " - " .. suffix)
 
     else
       return false
@@ -307,11 +308,11 @@ end
 
 --- An html template.
 -- pass a string 'content' and a string 'navigation'. returns an html string.
-function doc.file_template(content, navigation)
+function doc.file_template(content, navigation, title)
     return [[
 <!doctype html><html><head>
   <meta charset=utf-8>
-  <title>Reference</title>
+  <title>]] .. title .. [[</title>
   <link href="style.css" rel="stylesheet" type="text/css">
 
 </head><body>
@@ -362,7 +363,7 @@ end
 --- Wrap text with HMTL-Element elem.
 --[[
 return doc.wrap("in italics", "em")
-]]--@EXPECT '"<em>in italics</em>"'
+]]--@EXPECT "<em>in italics</em>"
 function doc.wrap(text, element, attr)
     return table.concat {"<", element, attr or "", ">", text, "</", element, ">"}
 end
@@ -370,7 +371,7 @@ end
 --- Wrap a list of elements with HTML-Element elem.
 --[[
 return doc.wraps({"hallo", "bello", "cello"}, "p")
-]]--@EXPECT '"<p>hallo</p>\n<p>bello</p>\n<p>cello</p>"'
+]]--@RUN '"<p>hallo</p>\n<p>bello</p>\n<p>cello</p>"'
 function doc.wraps(list, element)
     local x = table.concat(doc.map(list, doc.wrap, element), "\n")
     return x

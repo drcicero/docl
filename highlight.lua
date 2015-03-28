@@ -32,6 +32,7 @@ function M.highlight(string)
     return (string :gsub("&", "&amp;") :gsub("<", "&lt;") .. "<")
 
         :gsub("\n", "<br>")
+        :gsub("\t", "    ")
         :gsub(" ", "<wbr>&nbsp;")
 
         :gsub("%$", suspend)

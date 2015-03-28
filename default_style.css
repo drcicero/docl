@@ -1,37 +1,37 @@
-body { font: 1em/1.25 sans; font-weight: lighter;
-    color: #444; background: #fffff8;
+html { background: #fffff8; }
+body { font: 1em/1.25 sans; font-weight: lighter; color: #444;
     max-width: 1000px; margin: auto; }
-p {margin: .6em 0;}
-
-a { font-weight: normal; color: #0ad; text-decoration: none; }
-a:visited { color: #a0d; text-decoration: none; }
-a:hover { text-decoration: none; color: #0da; }
+p { margin: .6em 0; }
 
 dt { border-bottom: 1px dotted #ddd; margin-left: 10px;
     font-family: monospace; font-size: 1.3em; }
-dd { padding-left: 20px; margin-left: 20px; margin-bottom: 1.5em; }
 dt:target { background-color: yellow; }
 dt:target + * { border-left: yellow 5px solid; margin-left: 15px; }
+dd { padding-left: 20px; margin-left: 20px; margin-bottom: 1.5em; }
 
-.func-link { display: block; padding: .2em 1em; font-family: monospace; }
-#navigation a { display: block; padding: .2em 1em; }
-.list-link { display: block; }
-.list-link > div:nth-child(2) { font: 1em/1.25 sans; font-weight: lighter; color: #444; }
-.list-link:hover, #navigation a:hover { background-color: #eed; }
-#content .list-link { padding: .5em; }
-#navigation .list-link > div:nth-child(2) { margin: 0 0 .5em 2em; }
-#content .list-link > div {width: 40%; display: inline-block;}
+a { font-weight: normal; color: #0ad; text-decoration: none; }
+a:visited { color: #028; text-decoration: none; }
+a:hover { text-decoration: none; color: #0da; }
+
+.list-link, .func-link { display: block; padding: .2em 1em; }
+.func-link { font-family: monospace; }
+.list-link:hover, .func-link:hover { background-color: #eed; }
+
+.list-link > div:nth-child(2) { color: #444; }
+#content    .list-link { padding: .5em; }
+#content    .list-link > div {width: 40%; display: inline-block;}
+#navigation .list-link > div:nth-child(2) { margin: 0 0 .5em 1em; }
 
 /* layout */
 #navigation { position: fixed; top: 1em; bottom: 1em;
     overflow-y: scroll; padding-top: 1em; width: 16em; }
-#navigation h2, #navigation h3 { margin: 0 .8em; margin-top: 1em; }
-#navigation h2 { margin-bottom: 1em; font-size: 1em; }
-#navigation h3 { border-bottom: 1px dotted #ddd; font-size: .9em; }
+#navigation h2, #navigation h3 { margin: 0 .8em; margin-top: 1.2em; }
+#navigation h2 { font-size: 1em; }
+#navigation h3 { border-bottom: 1px solid #ddd; font-size: .9em; }
 
 #content { margin-left: 18em; padding: 1em; }
 #content h1 { font-size: 1.3em; }
-#content h2 { font-size: 1.2em; padding-top: 1em; border-top: 2px #ddd dotted; }
+#content h2 { font-size: 1.2em; padding-top: 1em; border-top: 2px #eee solid; }
 
 footer { margin-left: 18em; padding: 1em; }
 #about { border-left: 16em solid #123; padding-right: 1em; text-align: right; }
@@ -41,8 +41,8 @@ code { padding: .2em; font-family: monospace;
     background-color: #eed; color:#555; }
 pre br { margin-bottom: .2em }
 pre { display: inline-block; padding: 1em; margin: 0 1em 1em 0;
-    vertical-align: top; overflow: auto;
-    font-family: monospace; width: calc(100% - 2em); white-space: normal;
+    vertical-align: top; overflow: auto; white-space: normal;
+    font-family: console, monospace; width: calc(100% - 2em);
     background-color: #eed; color:#555; }
 pre.run { width: calc(60% - 3em); }
 pre.success { width: calc(40% - 3em); }
@@ -61,7 +61,6 @@ pre.fail::before {content:"This was returned instead"; color:red;}
 .operator { color: black; font-weight: bold; }
 .string { color: green; font-weight: bold; }
 .escape { color: blue; font-weight: normal; }
-.number { color: red; font-weight: bold; }
 
 /* print? */
 @media print {
@@ -81,3 +80,4 @@ pre.fail::before {content:"This was returned instead"; color:red;}
     transition: height 1s, padding 1s; padding: 0 1em; }
 .turnable > input:hover + label { color: #0ad; }
 .turnable > input:checked ~ div { height: auto; padding: 1em 1em; }
+

@@ -2,15 +2,8 @@
 
 --- Docl - simple documentation for lua
 --[[
-local doc = require "doc"
-local helptext = (require "help").help
-return (doc.link(
-  helptext
-    :gsub("<", "&lt;")
-    :gsub("(.-)\n", function (x) return (x == "" or x:sub(1,1) == " ")
-        and x .. "\n"
-         or doc.wrap(x, "h2") end)))
-    :gsub("\n\n", "<p></p>")
+local help = require "help"
+return help.webhelp
 ]]--@INSERT_AS_TEXT
 --
 -- <h2>Note</h2>
@@ -49,11 +42,14 @@ $ docl *.lua
 --
 -- recursively document all files ending in .lua and put output into 'html-doc/'
 --
+-- <h2>Links</h2>
+--
+-- <a href=https://github.com/drcicero/docl>Github Repository</a>
 
 local docldir, file = arg[0]:match'(.*/)(.*)'
 package.path = docldir .. "?.lua;" .. package.path
 
-local help = (require "help").help
+local help = require "help"
 local doc = require "doc"
 local opt = require "parseopt"
 
@@ -78,15 +74,8 @@ local function does_directory_exist(dir)
 end
 
 local function handle_shell_options ()
-  local defaults = {
-    _v = opt.empty,
-    _h = opt.empty,
-    __dir = "doc",
-    __lift = opt.empty,
-    __show_source = "true",
-  }
-
-  local options = opt.parse(arg, defaults)
+  local options = opt.parse(arg, help.default_options)
+  if not options then return end
 
   if options._v then
     print("This docl version 1.2 - have fun!")
@@ -95,17 +84,17 @@ local function handle_shell_options ()
 
   if options._h then
     print("Synopsis")
-    print(help)
-    print()
-    print("Further information available via the "
-       .. "<a href=drcicero.github.io/docl/>docl documentation</a>.")
+    print(help.help)
+    print(help.optionshelp)
+    print("Further information available via the docl documentation")
+    print("http://drcicero.github.io/docl/")
     return
   end
 
-  opt.apply_defaults(options, defaults)
+  opt.apply_defaults(options, help.default_options, true)
 
-  if ({["true"]=true, ["false"]=false})[options.__show_source] then
-    print("ERROR: unknown option --show-source '" .. word .. "'")
+  if not ({["true"]=true, ["false"]=true})[options.__source] then
+    print("ERROR: unknown argument '" .. options.__source .. "' for option --source")
     print("  expected 'true' or 'false'")
     return
   end
@@ -133,8 +122,8 @@ if options then
 
   for i, file in ipairs(options) do
     print("* " .. file)
-    local sections = doc.parse_file(file, links, options.__show_source)
-    local result = doc.gen_file(sections)
+    local sections = doc.parse_file(file, links, options.__source == "true")
+    local result = doc.gen_file(sections, options.__suffix)
 
     if file == options.__lift then
       theliftfile = {sections=sections, result=result}
@@ -153,8 +142,8 @@ if options then
     end
   end
   if not theliftfile then
-    local sections = doc.parse_file(file, links, options.__show_source)
-    local result = doc.gen_file(sections)
+    local sections = doc.parse_file(file, links, options.__source == "true")
+    local result = doc.gen_file(sections, options.__suffix)
     theliftfile = {sections=sections, result=result}
   end
 
@@ -164,7 +153,7 @@ if options then
   if theliftfile then
     for i, section in ipairs(theliftfile.sections) do
       local description = theliftfile.sections[i].first or {}
-      local title = description.first
+      title = description.first
 
       content = content
         .. doc.wrap(title, i==1 and "h1" or "h2")
@@ -188,8 +177,7 @@ if options then
   navigation = navigation .. htmltoc
 
   local file = io.open(options.__dir .. "index.html", "w")
-  file:write( doc.file_template(content, navigation) )
-
+  file:write( doc.file_template(content, navigation, title) )
   file:close()
 
   local filestable = {}
