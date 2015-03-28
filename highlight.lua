@@ -3,17 +3,17 @@
 local M = {}
 
 --- Wrap corresponding parts of Lua-Code with HTML-Spans of the classes
--- 'comment', 'string', 'escape', 'operator' and 'keyword'. Does not really
--- work with multiline comments or multiline strings, everything else should
+-- 'comment', 'string', 'escape', 'operator' and 'keyword'. Does not
+-- work with multiline comments and multiline strings, everything else should
 -- be fine.
 --[=[
 local highlight = require "highlight"
 
-return highlight.highlight( [[
-   function get(table, key)
-       return table[key]
-   end
-]] )
+return highlight.highlight( ""
+.. "function get(table, key)"
+.. "    return table[key]"
+.. "end"
+)
 ]=]--@RUN
 function M.highlight(string)
     local inserts = {}
@@ -29,48 +29,45 @@ function M.highlight(string)
         return "$" .. #inserts .. ";"
     end
 
-    return (string
-        :gsub("<", "&lt;") .. "<")
+    return (string :gsub("&", "&amp;") :gsub("<", "&lt;") .. "<")
+
         :gsub("\n", "<br>")
+        :gsub(" ", "<wbr>&nbsp;")
 
         :gsub("%$", suspend)
---        :gsub("%$.-;", suspend)
 
-        :gsub("\\\\", suspend)
+        :gsub("\\\\", wrapclass("escape"))
         :gsub('\\["\']', wrapclass("escape"))
---        :gsub("(<br>%-%-.-)([\n<])", wrapclass("comment"))
-        :gsub("'.-'", wrapclass("string")):gsub('".-"', wrapclass("string"))
-        :gsub("(%-%-.-)([\n<])", wrapclass("comment"))
 
---        :gsub("(%d+)([^;])", wrapclass("number"))
+        :gsub("'.-'", wrapclass("string"))
+        :gsub('".-"', wrapclass("string"))
+
+        :gsub("(%-%-.-)(<br>)", wrapclass("comment"))
+
+--      :gsub("(%d+)([^;])", wrapclass("number"))
 
         :gsub("[=()#[%]+-*/{}]", wrapclass("operator"))
 
-        :gsub("(elseif)([ \n<])", wrapclass("keyword"))
-        :gsub("(do)([ \n<])", wrapclass("keyword"))
-        :gsub("(in)([ \n<])", wrapclass("keyword"))
-        :gsub("(if)([ \n<])", wrapclass("keyword"))
-        :gsub("(for)([ \n<])", wrapclass("keyword"))
-        :gsub("(end)([ \n<])", wrapclass("keyword"))
-        :gsub("(else)([ \n<])", wrapclass("keyword"))
-        :gsub("(then)([ \n<])", wrapclass("keyword"))
-        :gsub("(break)([ \n<])", wrapclass("keyword"))
-        :gsub("(until)([ \n<])", wrapclass("keyword"))
-        :gsub("(local)([ \n<])", wrapclass("keyword"))
-        :gsub("(while)([ \n<])", wrapclass("keyword"))
-        :gsub("(return)([ \n<])", wrapclass("keyword"))
-        :gsub("(function)([ \n<])", wrapclass("keyword"))
+        :gsub("(elseif)(<)", wrapclass("keyword"))
+        :gsub("(do)(<)", wrapclass("keyword"))
+        :gsub("(in)(<)", wrapclass("keyword"))
+        :gsub("(if)(<)", wrapclass("keyword"))
+        :gsub("(for)(<)", wrapclass("keyword"))
+        :gsub("(end)(<)", wrapclass("keyword"))
+        :gsub("(else)(<)", wrapclass("keyword"))
+        :gsub("(then)(<)", wrapclass("keyword"))
+        :gsub("(break)(<)", wrapclass("keyword"))
+        :gsub("(until)(<)", wrapclass("keyword"))
+        :gsub("(local)(<)", wrapclass("keyword"))
+        :gsub("(while)(<)", wrapclass("keyword"))
+        :gsub("(return)(<)", wrapclass("keyword"))
+        :gsub("(function)(<)", wrapclass("keyword"))
 
-
-        :gsub(" ", "&nbsp;")
-
+        :gsub("$(.-);", function (x) return inserts[tonumber(x)] end)
         :gsub("$(.-);", function (x) return inserts[tonumber(x)] end)
         :gsub("$(.-);", function (x) return inserts[tonumber(x)] end)
 
         :sub(1, -2)
-
--- debugging
---        .. "</pre>" .. doc.wraps(doc.map(inserts, function (x) return "------<br>" .. x end ), "p")
 end
 
 return M

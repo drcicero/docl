@@ -5,12 +5,68 @@
 ]]--@RUN
 -- See #doc.parse for how it expects your files to be written.
 
-local highlight = require "highlight"
-local repr = require "repr"
+local highlight = (require "highlight").highlight
+local repr = (require "repr").repr
 
 local ok,res = pcall(require, "traceback")
 if ok then traceback = res end
 local doc = {}
+
+--- parse a codeblock and return pretty html.
+function doc.codeblock2html (codeblock, env)
+    local code = table.concat(codeblock, "\n")
+    local chunk, result = loadstring(code, file) -- "bt")
+    local ok
+    if chunk then
+        setfenv(chunk, env)
+        ok, result = xpcall(chunk, traceback or function (s) return s end)
+    end
+
+    if not ok then
+        local error_line = tonumber(result:match("%[string .*]:(%x+).-") or 0) + codeblock.firstline
+        print("  ERROR in line " .. error_line)
+        print("", result)
+        print()
+        result = result:gsub(".-\n", function (line)
+            if line:match("^ *=") then
+                return highlight(line):gsub("\t", "    "):gsub("  ", "&nbsp; ")
+            else
+                line = line:gsub("<", "&lt;")
+                if line:match("^TRACEBACK") then
+                    line = "<span style=color:red>" .. line:sub(1, -1) .. "</span>"
+                end
+                return line:gsub("\n", "<br>"):gsub("\t", "    "):gsub("  ", "&nbsp; ")
+            end
+        end)
+        return "error", "<pre class=error>" .. result .. "</pre>"
+
+    elseif codeblock.kw == "INSERT_AS_TEXT" then
+        print("  insert in line " .. tostring(codeblock.firstline))
+        return "insert", result
+
+    elseif codeblock.kw == "EXPECT" then
+        result = repr(result)
+       -- build html output of codeblock
+        local expected = repr(loadstring("return " .. codeblock.argument)())
+        local string = "<pre class=run>" .. highlight(code) .. "</pre>"
+              .. "<pre class=success>" .. highlight(expected) .. "</pre>"
+
+        if expected ~= result then
+            print("  FAIL in line " .. tostring(codeblock.firstline))
+            print("    expected: " .. expected)
+            print("    instead : " .. result)
+            return "fail", string .. "<pre class=fail>" .. highlight(result) .. "</pre>"
+
+        else
+            return "success", string
+        end
+
+    elseif codeblock.kw == "RUN" then
+        return "run", "<pre class=run>" .. highlight(code) .. "</pre>"
+            .. "<pre class=success>" .. highlight(repr(result)) .. "</pre>"
+    end
+end
+
 
 --- Parse documention from file.
 -- returns a list of sections, where each section is a list of defintions plus a description.
@@ -43,186 +99,115 @@ require "math"
 -- rest of the file
 ]]
 function doc.parse_file (file, links, SHOW_SOURCECODE)
-    local env
+    local msg
+
     local sections = {{}}
-    local doccomment, doctest
+    local doccomment, codeblock
     local i = 0
 
  -- generate new global table for the scripts
-    env = {}
-    setmetatable(env, {__index = _G})
+    local env = {arg={}}
     env._G = env
-    env.arg = {}
-    local dir = ("./" .. file):match'(.*/)(.*)'
-    env.package.path = dir .. "/?.lua;" .. package.path
+    setmetatable(env, {__index = _G}) -- allow acces to all normal global functions
+    -- allow relative requires
+    env.package = {path = ("./" .. file):match'(.*/)(.*)' .. "/?.lua;" .. package.path}
 
- -- helper functions
-    local function end_doctest (line)
-        if line:sub(1,  8 + doctest.level) == "]" .. ("="):rep(doctest.level) .. "]--@RUN"
-        or line:sub(1, 11 + doctest.level) == "]" .. ("="):rep(doctest.level) .. "]--@EXPECT" then
-
-            local ok
-            local chunk, result = loadstring(table.concat(doctest, "\n"), file, "bt", env)
-            if chunk then
-                ok, result = xpcall(chunk, traceback or function (s) return s end)
-            end
-
-         -- build html output of doctest
-            local string = "<pre class=run>" .. highlight.highlight(table.concat(doctest, "\n")) .. "</pre>"
-
-            local expected
-            if line:sub(1, 11 + doctest.level) == "]" .. ("="):rep(doctest.level) .. "]--@EXPECT" then
-                expected = line:sub(13 + doctest.level)
-                string = string .. "<pre class=success>" .. highlight.highlight(expected) .. "</pre>"
-            end
-
-            if not ok then
-                local error_line = tonumber(result:match("%[string .*]:(%x+).-") or 0) + doctest.firstline 
-                print("  ERROR in line " .. error_line)
-                print("", result)
-                print()
-                result = result:gsub(".-\n", function (line)
-                    if line:match("^ *=") then
-                        return highlight.highlight(line):gsub("\t", "    "):gsub("  ", "&nbsp; ")
-                    else
-                        line = line:gsub("<", "&lt;")
-                        if line:match("^TRACEBACK") then
-                            line = "<span style=color:red>" .. line:sub(1, -1) .. "</span>"
-                        end
-                        return line:gsub("\n", "<br>"):gsub("\t", "    "):gsub("  ", "&nbsp; ")
-                    end
-                end)
-                string = string .. "<pre class=error>" .. result .. "</pre>"
+ -- sub functions {
+        local function end_codeblock (line)
+            if doc.startswith(line, "--@") then
+                codeblock.kw = (line:sub(4) .. " "):match("^(.-) ")
+                codeblock.argument = line:sub(#codeblock.kw+4)
+                msg, string = doc.codeblock2html(codeblock, env)
 
             else
-                result = repr.repr(result)
-                if expected ~= nil then
-                    if expected ~= result then
-                        print("  FAIL in line " .. tostring(doctest.firstline))
-                        print("    expected: " .. expected)
-                        print("    instead : " .. result)
-                        string = string .. "<pre class=fail>" .. highlight.highlight(result) .. "</pre>"
-
-                    else
-                        print("  success in line " .. tostring(i))
-                    end
-
-                else
-                    print("  generated in line " .. tostring(i))
-                    string = string .. "<pre class=success>" .. highlight.highlight(result) .. "</pre>"
-                end
+                string = doc.wrap(highlight(table.concat(codeblock, "\n")), "pre")
             end
 
-         -- merge doctest output into doccomment
+         -- merge codeblock output into doccomment
             table.insert(doccomment, string)
-            doctest = nil -- end doctest
-
-        else
-         -- merge doctest output into doccomment
-            table.insert(doccomment, doc.wrap(highlight.highlight(table.concat(doctest, "\n")), "pre"))
-            doctest = nil -- end doctest
+            codeblock = nil -- end codeblock
         end
-    end
 
-    local function end_doccomment (line)
-        if not sections[#sections].first then
-            -- the first doccomment is the file/section-description
-            -- ignores line
-            if SHOW_SOURCECODE and #sections == 1 then
-                local f = io.open(file, "r")
-                local content = f:read("*a")
-                f:close()
-                doccomment[#doccomment+1] = [[
-<div class=turnable>
-  <input id=code-folder type=checkbox>
-  <label for=code-folder>View source-code</label>
-  <div><pre id=folded-code style=width:inherit>
-]] .. highlight.highlight(content) .. "</pre></div></div>"
-            end
-            sections[#sections].first = doccomment
+        local function end_doccomment (line)
+            -- the first doccomment is the section-description
+            if not sections[#sections].first then
+--                if SHOW_SOURCECODE and #sections == 1 then
+--                    table.insert(doccomment, doc.source_template(file))
+--                end
+                sections[#sections].first = doccomment
 
-        else
-            -- else a function-description
-            local name, args = line:match("function (.-) -[(](.-)[)]")
-            if name~= nil and name~="" then
-                table.insert(doccomment, 1, doccomment.first)
-                doccomment.first = tostring(name) .. " (" .. tostring(args) .. ")"
-
-            else
-                local name, args = line:match("(.-)= -function -[(](.-)[)]")
+            else -- try a function-description
+                local name, args = doc.parse_func_def(line)
                 if name then
                     table.insert(doccomment, 1, doccomment.first)
                     doccomment.first = tostring(name) .. " (" .. tostring(args) .. ")"
                 end
+                table.insert(sections[#sections], doccomment)
             end
 
---        if line:sub(1, 6) == "local " then
---            if not sections.locals then sections.locals = {} end
---            table.insert(sections.locals, doccomment)
---        else
-            table.insert(sections[#sections], doccomment)
---        end
+            doccomment = nil -- end doccomment
         end
 
-        doccomment = nil -- end doccomment
-    end
-
-    local function start_doccomment (line)
-        if doccomment then end_doccomment("") end
-        doccomment = {first = doc.link(line, links, file, i)}
-    end
-
-    local function start_doctest (line, level)
-        doctest = {}
-        if not line:sub(5 + level):gmatch(" *") then
-            table.insert(doctest, line:sub(5))
+        local function start_doccomment (line)
+            if doccomment then end_doccomment("") end
+            doccomment = {first = doc.link(line, links, file, i)}
         end
-        doctest.level = level
-        doctest.firstline = i
-    end
 
-    local function change_section (line)
-        start_doccomment(line)
-        table.insert(sections, {})
-    end
+        local function start_codeblock (line, level)
+            codeblock = {}
+            if not line:sub(5 + #level):gmatch(" *") then
+                table.insert(codeblock, line:sub(5))
+            end
+            codeblock.ending = "]" .. level .. "]"
+            codeblock.firstline = i
+        end
 
+        local function start_section (line)
+            start_doccomment(line)
+            table.insert(sections, {})
+        end
+
+        local function continue_doccomment (line)
+            table.insert(doccomment, doc.link(line, links, file, i))
+        end
+
+        local function continue_codeblock (line)
+            table.insert(codeblock, line)
+        end
+
+        local function match(line)
+            if codeblock then -- inside a codeblock?
+                if doc.startswith(line, codeblock.ending) then
+                    return end_codeblock(line:sub(#codeblock.ending+1)) end
+
+                return continue_codeblock(line)
+            end
+
+            local first_nonspace = line:find("[^ ]") or 1
+           	line = line:sub(first_nonspace)
+
+            if doc.startswith(line, "----") then
+                return start_section(line:sub(5)) end
+
+            if doc.startswith(line, "---") then
+                return start_doccomment(line:sub(4)) end
+
+            if not doccomment then return end
+
+            local codeblock_level = line:match("^--%[(=*)%[")
+            if codeblock_level ~= nil then
+                return start_codeblock(line, codeblock_level) end
+
+            if doc.startswith(line, "--") then
+                return continue_doccomment(line:sub(3)) end
+
+            end_doccomment(line)
+        end
+    -- } sub functions
 
     for line in io.lines(file) do
         i = i+1
-        local first_nonspace = line:find("[^ ]")
-        if doctest then
-            if line:sub(1, 2 + doctest.level) == "]" .. ("="):rep(doctest.level) .. "]" then
-                end_doctest(line)
-
-            else -- continue doctest
-                table.insert(doctest, line)
-            end
-
-		elseif first_nonspace then
-           	line = line:sub(first_nonspace)
-
-            if line:sub(1,4) == "----" then
-                change_section(line:sub(5))
-
-            elseif line:sub(1,3) == "---" then
-                start_doccomment(line:sub(4))
-
-            elseif doccomment then
-             -- continue doccomment
-
-                local doctest_level = line:match("--%[(=*)%[")
-                if line:sub(1,2) == "--" and doctest_level ~= nil then
-                    start_doctest(line, #doctest_level)
-
-                elseif line:sub(1,2) == "--" then
-                 -- continue normal doccomment
-                    table.insert(doccomment, doc.link(line:sub(3), links, file, i))
-
-                else
-                    end_doccomment(line)
-                end
-            end
-        end
+        match(line)
     end
 
     return sections
@@ -230,22 +215,6 @@ end
 
 --- Generate documentation and run unit tests for list of sections.
 function doc.gen_file (sections)
-    local function content_template(section)
-        return doc.wrap(
-            table.concat(doc.map(section, function(def)
-                return doc.def_template(def.first, "<p>"..table.concat(def, "\n"):gsub("\n\n", "</p><p>").."</p>" ) end
-            ))
-        , "dl")
-    end
-    local function nav_template(section)
-        return doc.wraps(
-            doc.map(section, function(x)
-                return "<a href=#" .. x.first:sub(1, (x.first:find(" ") or 1)-1) .. ">" .. x.first .. "</a>"
-            end)
-        , "li")
-    end
-
-
 --    if not sections[1].first then sections[1].first = {first="Reference"} end
 
     local content, navigation = "", "<a href=index.html>> Index</a>"
@@ -256,11 +225,11 @@ function doc.gen_file (sections)
         content = content
             .. doc.wrap(title, i==1 and "h1" or "h2")
             .. "<p>"..table.concat(description, "\n"):gsub("\n\n", "</p><p>").."<p>"
-            .. content_template(section)
+            .. doc.content_template(section)
 
         navigation = navigation
             .. doc.wrap(title, i==1 and "h2" or "h3")
-            .. nav_template(section)
+            .. doc.nav_template(section)
     end
 
 
@@ -272,35 +241,58 @@ function doc.gen_file (sections)
     end
 end
 
--- Apply #doc.gen_file for Lua-files and #doc.gen_dir for directories to all
--- elements of dir.
---function doc.gen_dir (dir)
---    dir = dir:gsub(" ", "\\ ")
---
---    local t={}
---
---    local ls = io.popen("ls -F " .. dir):read("*a")
---    ls:gsub("(.-)\n", function (item)
---        if item:sub(-4) == ".lua" then
---            doc.gen_file(dir .. item)
---            t[#t+1] = dir:gsub("/", ".") .. item:sub(1, -5)
---
---        elseif item:sub(-1) == "/" then
---            for i, k in ipairs(doc.gen_dir(dir .. item)) do
---                t[#t+1] = k
---            end
---
---        end
---    end)
---    return t
---end
+---
+function doc.content_template(section)
+    return doc.wrap(
+        table.concat(doc.map(section, function(def)
+            return doc.def_template(def.first, "<p>"..table.concat(def, "\n"):gsub("\n\n", "</p><p>").."</p>" ) end
+        ))
+    , "dl")
+end
+
+---
+function doc.nav_template(section)
+    return table.concat(doc.map(section, function(x)
+        return "<a class=func-link href=#" .. x.first:sub(1, (x.first:find(" ") or 1)-1) .. ">" .. x.first .. "</a>"
+    end), "\n")
+end
+
+--- parse a line containing a function definition into a (name, list-of-args) pair
+function doc.parse_func_def(line)
+    local name, args
+    name, args = line:match("function (.-) -[(](.-)[)]")
+    if name~=nil and name~="" then return name, args end
+
+    name, args = line:match("(.-)= -function -[(](.-)[)]")
+    if name~=nil and name~="" then return name, args end
+end
+
+--- does the string 'str' start with the string 'beginning'?
+function doc.startswith(str, beginning)
+    return str:sub(1, #beginning) == beginning
+end
 
 ---- HTML-generators
 
-local max_id = 0
-function generate_id()
-	max_id = max_id + 1
-	return max_id
+--local max_id = 0
+--local function generate_id()
+--	max_id = max_id + 1
+--	return max_id
+--end
+
+--- Generate Sourcecode Drawer
+function doc.source_template(file)
+    local f = io.open(file, "r")
+    local content = f:read("*a")
+    f:close()
+    return [[
+<div class=turnable>
+  <input id=code-folder type=checkbox>
+  <label for=code-folder>View source-code</label>
+  <div><pre id=folded-code style=width:inherit>
+]] .. highlight(content) .. [[
+</pre></div></div>
+]]
 end
 
 --- Make a HTML-dl-Element (definition list) out of a string 'dt' and a
@@ -320,7 +312,7 @@ function doc.file_template(content, navigation)
 <!doctype html><html><head>
   <meta charset=utf-8>
   <title>Reference</title>
-  <link href="style.css" rel="stylesheet" type="text/css"></meta>
+  <link href="style.css" rel="stylesheet" type="text/css">
 
 </head><body>
   <div id=content>
@@ -339,7 +331,7 @@ function doc.link (string, links, file, line)
     local alphanum = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVVWXYZ0123456789"
     local result = string
         :gsub("'(.-)'", function (code)
-            return doc.wrap(highlight.highlight(code), "code")
+            return doc.wrap(highlight(code), "code")
         end)
 
         :gsub("$([" .. alphanum .. "_./#]+)", function (path)
@@ -370,17 +362,18 @@ end
 --- Wrap text with HMTL-Element elem.
 --[[
 return doc.wrap("in italics", "em")
-]]--@EXPECT "<em>in italics</em>"
-function doc.wrap(text, element, attrs)
-    return table.concat {"<", element, ">", text, "</", element, ">"}
+]]--@EXPECT '"<em>in italics</em>"'
+function doc.wrap(text, element, attr)
+    return table.concat {"<", element, attr or "", ">", text, "</", element, ">"}
 end
 
 --- Wrap a list of elements with HTML-Element elem.
 --[[
 return doc.wraps({"hallo", "bello", "cello"}, "p")
-]]--@EXPECT "<p>hallo</p><p>bello</p><p>cello</p>"
+]]--@EXPECT '"<p>hallo</p>\n<p>bello</p>\n<p>cello</p>"'
 function doc.wraps(list, element)
-    return table.concat(doc.map(list, doc.wrap, element))
+    local x = table.concat(doc.map(list, doc.wrap, element), "\n")
+    return x
 end
 
 ---- Useful helper functions
@@ -392,8 +385,8 @@ end)
 ]]--@EXPECT {2, 3, 4}
 function doc.map(list, f, ...)
     local result = {}
-    for i, item in ipairs(list) do
-        table.insert(result, f(item, ...))
+    for i = 1, #list do
+        result[i] = f(list[i], ...)
     end
     return result
 end
