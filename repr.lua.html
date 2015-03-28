@@ -1,19 +1,18 @@
 <!doctype html><html><head>
   <meta charset=utf-8>
-  <title>Reference</title>
+  <title> Readable tostring - Documentation</title>
   <link href="style.css" rel="stylesheet" type="text/css">
 
 </head><body>
   <div id=content>
-<h1> Readable tostring</h1><p> provides the <code>repr</code> function below.
-<pre class=run>repr<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;<span class=operator>(</span>require<wbr>&nbsp;<span class=string>"repr"</span><span class=operator>)</span>.repr</pre><pre class=success>nil</pre><p><dl><dt id=M.repr><a href=#M.repr>M.repr (value)</a></dt>
+<h1> Readable tostring</h1><p><pre class=run>repr<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;<span class=operator>(</span>require<wbr>&nbsp;<span class=string>"repr"</span><span class=operator>)</span>.repr</pre><pre class=success>nil</pre><p><dl><dt id=M.repr><a href=#M.repr>M.repr (value)</a></dt>
 <dd><p> Generate a readable string out of any lua-value.
  It is almost serialisation ;)</p><p> Examples:
 <pre class=run><span class=keyword>return</span><wbr>&nbsp;repr<span class=operator>(</span>nil<span class=operator>)</span></pre><pre class=success><span class=string>"nil"</span></pre>
 <pre class=run><span class=keyword>return</span><wbr>&nbsp;repr<span class=operator>(</span>1<span class=operator>)</span></pre><pre class=success><span class=string>"1"</span></pre>
 <pre class=run><span class=keyword>return</span><wbr>&nbsp;repr<wbr>&nbsp;<span class=string>"test<wbr>&nbsp;string"</span></pre><pre class=success><span class=string>"<span class=escape>\"</span>test<wbr>&nbsp;string<span class=escape>\"</span>"</span></pre>
 <pre class=run><span class=keyword>return</span><wbr>&nbsp;repr<wbr>&nbsp;<span class=operator>{</span>1,<wbr>&nbsp;2,<wbr>&nbsp;b<span class=operator>=</span>7,<wbr>&nbsp;3,<wbr>&nbsp;a<span class=operator>=</span>6,<span class=operator>}</span></pre><pre class=success><span class=string>"{1,<wbr>&nbsp;2,<wbr>&nbsp;3,<wbr>&nbsp;a=6,<wbr>&nbsp;b=7}"</span></pre>
-<pre class=run><span class=keyword>return</span><wbr>&nbsp;repr<span class=operator>(</span><span class=keyword>function</span><wbr>&nbsp;<span class=operator>(</span><span class=operator>)</span><wbr>&nbsp;end<span class=operator>)</span></pre><pre class=success><span class=string>"function:<wbr>&nbsp;0x1009000"</span></pre></p></dd></dl>
+<pre class=run><span class=keyword>return</span><wbr>&nbsp;repr<span class=operator>(</span><span class=keyword>function</span><wbr>&nbsp;<span class=operator>(</span><span class=operator>)</span><wbr>&nbsp;end<span class=operator>)</span></pre><pre class=success><span class=string>"function:<wbr>&nbsp;0xcfc4e0"</span></pre></p></dd></dl>
   </div><div id=navigation>
 <a href=index.html>> Index</a><h2> Readable tostring</h2><a class=func-link href=#M.repr>M.repr (value)</a>
   </div><footer style=margin-right>
