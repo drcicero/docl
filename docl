@@ -44,7 +44,9 @@ $ docl *.lua
 --
 -- <h2>Links</h2>
 --
--- <a href=https://github.com/drcicero/docl>Github Repository</a>
+-- <a href=http://github.com/drcicero/docl>Github Repository</a>
+--
+-- <a href=http://drcicero.github.io/drcicero/docl/LICENSE.txt>Docls License (MIT)</a>
 
 local docldir, file = arg[0]:match'(.*/)(.*)'
 package.path = docldir .. "?.lua;" .. package.path
