@@ -85,25 +85,20 @@ local function handle_shell_options ()
   end
 
   if options._h then
-    print("Synopsis")
-    print(help.help)
-    print(help.optionshelp)
-    print("Further information available via the docl documentation")
-    print("http://drcicero.github.io/docl/")
+    print(help.terminalhelp)
     return
   end
 
-  opt.apply_defaults(options, help.default_options, true)
-
-  if not ({["true"]=true, ["false"]=true})[options.__source] then
-    print("ERROR: unknown argument '" .. options.__source .. "' for option --source")
-    print("  expected 'true' or 'false'")
+  ok, err = pcall(opt.apply_defaults, options, help.default_options, help.allowed_args, true)
+  if not ok then
+    print("ERROR: " .. err.msg)
     return
   end
-
+  
   if not does_directory_exist(options.__dir) then
-    print("ERROR: the directory '" .. options.__dir .. "' does not exist.")
-    print("  please create it by executing 'mkdir " .. options.__dir .. "'")
+    print("ERROR: the directory '" .. options.__dir .. "' does not exist. Please")
+    print(" * create it by executing 'mkdir " .. options.__dir .. "', or")
+    print(" * choose another output-directory by supplying the option '--dir OUTPUTDIR'")
     return
   end
   options.__dir = options.__dir .. "/"
@@ -124,8 +119,8 @@ if options then
 
   for i, file in ipairs(options) do
     print("* " .. file)
-    local sections = doc.parse_file(file, links, options.__source == "true")
-    local result = doc.gen_file(sections, options.__suffix)
+    local sections = doc.parse_file(file, links, options)
+    local result = doc.gen_file(sections, options)
 
     if file == options.__lift then
       theliftfile = {sections=sections, result=result}
@@ -144,8 +139,8 @@ if options then
     end
   end
   if not theliftfile then
-    local sections = doc.parse_file(file, links, options.__source == "true")
-    local result = doc.gen_file(sections, options.__suffix)
+    local sections = doc.parse_file(file, links, options)
+    local result = doc.gen_file(sections, options)
     theliftfile = {sections=sections, result=result}
   end
 
@@ -179,7 +174,7 @@ if options then
   navigation = navigation .. htmltoc
 
   local file = io.open(options.__dir .. "index.html", "w")
-  file:write( doc.file_template(content, navigation, title) )
+  file:write( doc.file_template(content, navigation, title, options) )
   file:close()
 
   local filestable = {}

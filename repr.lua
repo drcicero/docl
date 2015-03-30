@@ -8,7 +8,7 @@ local M = {}
 local function key_repr(value)
     if type(value) == "string" then
         return value:match("%l%w*") and
-            value or "[" + M.repr(value) + "]"
+            value or "[" .. M.repr(value) .. "]"
     else
         return tostring(value)
     end

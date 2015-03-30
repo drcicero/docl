@@ -49,7 +49,7 @@ function M.parse (args, defaults)
 
     elseif word:sub(1,2) == "--" then
       if defaults[word:gsub("-", "_")] == nil then
-        print("ERROR: unknown option '" .. kwarg .. "'")
+        print("ERROR: unknown option '" .. word .. "'")
         print()
         print("Please help yourself by typing 'docl.lua -h'")
         return
@@ -73,15 +73,40 @@ function M.parse (args, defaults)
   return options
 end
 
+local doc = require "doc"
+
 --- apply the defaults of the 'options table' (see above) into the options
--- table. warn on using defaults if 'warn' is 'true'. returns nothing.
-function M.apply_defaults(options, defaults, warn)
+-- table.
+--
+-- if 'warn' is 'true', prints warnings when defaults are used.
+--
+-- returns nothing.
+--
+-- errors on unknown arguments.
+function M.apply_defaults(options, defaults, allowed_args, warn)
+  local t = {}
+  for k,v in pairs(allowed_args) do
+    local t2 = {}
+    for i,v in ipairs(v) do
+      t2[v[1]] = true
+    end
+    t[k] = t2
+  end
+
   for k,v in pairs(defaults) do
     if v ~= M.empty and options[k] == nil then
       if warn then
         print("Info: '"..k:gsub("_", "-").."' defaults to '"..v.."'")
       end
       options[k] = v
+
+    elseif t[k] and not t[k][options[k]] then
+      local t = {}
+      for i,v in ipairs(allowed_args[k]) do
+        table.insert(t, "'" .. v[1] .. "'")
+      end
+
+      error({msg="unknown argument '" .. options[k] .. "' for option " .. k .. "\n  expected either of " .. table.concat(t, ", ")})
     end
   end
 end

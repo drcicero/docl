@@ -13,7 +13,7 @@ if ok then traceback = res end
 local doc = {}
 
 --- parse a codeblock and return pretty html.
-function doc.codeblock2html (codeblock, env)
+function doc.codeblock2html (codeblock, env, highlight)
     local code = table.concat(codeblock, "\n")
     local chunk, result = loadstring(code, file) -- "bt")
     local ok
@@ -29,7 +29,7 @@ function doc.codeblock2html (codeblock, env)
         print()
         result = result:gsub(".-\n", function (line)
             if line:match("^ *=") then
-                return highlight(line):gsub("\t", "    "):gsub("  ", "&nbsp; ")
+                return highlight(line)
             else
                 line = line:gsub("<", "&lt;")
                 if line:match("^TRACEBACK") then
@@ -98,7 +98,7 @@ require "math"
 -- ...
 -- rest of the file
 ]]
-function doc.parse_file (file, links, SHOW_SOURCECODE)
+function doc.parse_file (file, links, options)
     local msg
 
     local sections = {{}}
@@ -112,12 +112,15 @@ function doc.parse_file (file, links, SHOW_SOURCECODE)
     -- allow relative requires
     env.package = {path = ("./" .. file):match'(.*/)(.*)' .. "/?.lua;" .. package.path}
 
+    local highlight = options.__highlight == "lua" and highlight or
+      function (x) return doc.wrap(x:gsub("<", "&lt;"), "code", " style=white-space:pre class=language-lua") end
+
  -- sub functions {
         local function end_codeblock (line)
             if doc.startswith(line, "--@") then
                 codeblock.kw = (line:sub(4) .. " "):match("^(.-) ")
                 codeblock.argument = line:sub(#codeblock.kw+4)
-                msg, string = doc.codeblock2html(codeblock, env)
+                msg, string = doc.codeblock2html(codeblock, env, highlight)
 
             else
                 string = doc.wrap(highlight(table.concat(codeblock, "\n")), "pre")
@@ -131,7 +134,7 @@ function doc.parse_file (file, links, SHOW_SOURCECODE)
         local function end_doccomment (line)
             -- the first doccomment is the section-description
             if not sections[#sections].first then
-                if SHOW_SOURCECODE and #sections == 1 then
+                if options.__source == "true" and #sections == 1 then
                     table.insert(doccomment, doc.source_template(file))
                 end
                 sections[#sections].first = doccomment
@@ -155,7 +158,7 @@ function doc.parse_file (file, links, SHOW_SOURCECODE)
 
         local function start_codeblock (line, level)
             codeblock = {}
-            if not line:sub(5 + #level):gmatch(" *") then
+            if line:sub(5 + #level):find("[^ ]") then
                 table.insert(codeblock, line:sub(5))
             end
             codeblock.ending = "]" .. level .. "]"
@@ -175,7 +178,7 @@ function doc.parse_file (file, links, SHOW_SOURCECODE)
             table.insert(codeblock, line)
         end
 
-        local function match(line)
+        local function parse_line(line)
             if codeblock then -- inside a codeblock?
                 if doc.startswith(line, codeblock.ending) then
                     return end_codeblock(line:sub(#codeblock.ending+1)) end
@@ -207,16 +210,15 @@ function doc.parse_file (file, links, SHOW_SOURCECODE)
 
     for line in io.lines(file) do
         i = i+1
-        match(line)
+        parse_line(line)
     end
 
+    sections.title = sections[1].first and sections[1].first.first or file
     return sections
 end
 
 --- Generate documentation and run unit tests for list of sections.
-function doc.gen_file (sections, suffix)
---    if not sections[1].first then sections[1].first = {first="Reference"} end
-
+function doc.gen_file (sections, options)
     local content, navigation = "", "<a href=index.html>> Index</a>"
     for i, section in ipairs(sections) do
         local description = sections[i].first or {}
@@ -234,8 +236,7 @@ function doc.gen_file (sections, suffix)
 
 
     if content ~= "<h1>Reference</h1><p><p><dl></dl>" then
-      local title = sections[1].first and sections[1].first.first or file
-      return doc.file_template(content, navigation, title .. " - " .. suffix)
+      return doc.file_template(content, navigation, sections.title .. " - " .. options.__suffix, options)
 
     else
       return false
@@ -308,7 +309,7 @@ end
 
 --- An html template.
 -- pass a string 'content' and a string 'navigation'. returns an html string.
-function doc.file_template(content, navigation, title)
+function doc.file_template(content, navigation, title, options)
     return [[
 <!doctype html><html><head>
   <meta charset=utf-8>
@@ -324,7 +325,9 @@ function doc.file_template(content, navigation, title)
 
   </div><footer style=margin-right>
     generated with docl
-  </footer></body></html>]]
+  </footer>
+]] .. (options.__highlight == "js" and "\n<script async src=highlight.js></script>" or "") .. [[
+</body></html>]]
 end
 
 --- Link #path.to.something for local references and $path.to.something for references to other files.
@@ -361,16 +364,14 @@ function doc.link (string, links, file, line)
 end
 
 --- Wrap text with HMTL-Element elem.
---[[
-return doc.wrap("in italics", "em")
+--[[return doc.wrap("in italics", "em")
 ]]--@EXPECT "<em>in italics</em>"
 function doc.wrap(text, element, attr)
     return table.concat {"<", element, attr or "", ">", text, "</", element, ">"}
 end
 
 --- Wrap a list of elements with HTML-Element elem.
---[[
-return doc.wraps({"hallo", "bello", "cello"}, "p")
+--[[return doc.wraps({"hallo", "bello", "cello"}, "p")
 ]]--@RUN '"<p>hallo</p>\n<p>bello</p>\n<p>cello</p>"'
 function doc.wraps(list, element)
     local x = table.concat(doc.map(list, doc.wrap, element), "\n")
@@ -379,15 +380,27 @@ end
 
 ---- Useful helper functions
 --- Transform elems of list with f.
---[[
-return doc.map({1,2,3}, function (x)
-    return x+1
-end)
+--[[return doc.map({1,2,3}, function (x) return x+1 end)
 ]]--@EXPECT {2, 3, 4}
+-- <br> [A] (A B... -> C) B... -> [C]
 function doc.map(list, f, ...)
     local result = {}
     for i = 1, #list do
         result[i] = f(list[i], ...)
+    end
+    return result
+end
+
+--- Transform values of dict with f.
+--[[return doc.kvmap({1, 2, a=5,b=7,c=9}, function (k,v)
+  return "_" .. tostring(k), v+1 end)
+]]--@EXPECT {_1=2, _2=3, _a=6, _b=8, _c=10}
+-- <br> {A:B} (A B C... -> D E) C... -> {D:E}
+function doc.kvmap(list, f, ...)
+    local result = {}
+    for k,v in pairs(list) do
+        local k,v = f(k, v, ...)
+        result[k] = v
     end
     return result
 end
