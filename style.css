@@ -1,6 +1,6 @@
 html { background: #fffff8; }
-body { font: 1em/1.25 sans; font-weight: lighter; color: #444;
-    max-width: 1000px; margin: auto; }
+body { font: 16px/1.5 sans; color: #444;
+    max-width: 60em; margin: auto; }
 p { margin: .6em 0; }
 
 dt { border-bottom: 1px dotted #ddd; margin-left: 10px;
@@ -14,7 +14,7 @@ a:visited { color: #028; text-decoration: none; }
 a:hover { text-decoration: none; color: #0da; }
 
 .list-link, .func-link { display: block; padding: .2em 1em; }
-.func-link { font-family: monospace; }
+.func-link { font-family: monospace; font-size: 13px; }
 .list-link:hover, .func-link:hover { background-color: #eed; }
 
 .list-link > div:nth-child(2) { color: #444; }
@@ -25,18 +25,18 @@ a:hover { text-decoration: none; color: #0da; }
 /* layout */
 #navigation { position: fixed; top: 1em; bottom: 1em;
     overflow-y: scroll; padding-top: 1em; width: 16em; }
-#navigation h2, #navigation h3 { margin: 0 .8em; margin-top: 1.2em; }
-#navigation h2 { font-size: 1em; }
-#navigation h3 { border-bottom: 1px solid #ddd; font-size: .9em; }
+#navigation h2, #navigation h3 { margin:  1em .8em; font-size: 1em; }
+#navigation h3 { border-bottom: 1px solid #ddd; }
 
 #content { margin-left: 18em; padding: 1em; }
-#content h1 { font-size: 1.3em; }
-#content h2 { font-size: 1.2em; padding-top: 1em; border-top: 2px #eee solid; }
+#content h1 { font: 3em/1.1 'Arial Black',sans; }
+#content h2 { font-size: 1em; padding-top: 1em; border-top: 2px #eee solid; }
 
 footer { margin-left: 18em; padding: 1em; }
 #about { border-left: 16em solid #123; padding-right: 1em; text-align: right; }
 
 /* code */
+pre code {padding: 0}
 code { padding: .2em; font-family: monospace;
     background-color: #eed; color:#555; }
 pre br { margin-bottom: .2em }

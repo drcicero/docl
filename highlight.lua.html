@@ -10,9 +10,15 @@
  <code>comment</code>, <code>string</code>, <code>escape</code>, <code>operator</code> and <code>keyword</code>. Does not
  work with multiline comments and multiline strings, everything else should
  be fine.
-<pre class=run><span class=keyword>local</span><wbr>&nbsp;highlight<wbr>&nbsp;<span class=operator>=</span><wbr>&nbsp;require<wbr>&nbsp;<span class=string>"highlight"</span><br><br><span class=keyword>return</span><wbr>&nbsp;highlight.highlight<span class=operator>(</span><wbr>&nbsp;<span class=string>""</span><br>..<wbr>&nbsp;<span class=string>"function<wbr>&nbsp;get(table,<wbr>&nbsp;key)"</span><br>..<wbr>&nbsp;<span class=string>"<wbr>&nbsp;<wbr>&nbsp;<wbr>&nbsp;<wbr>&nbsp;return<wbr>&nbsp;table[key]"</span><br>..<wbr>&nbsp;<span class=string>"end"</span><br><span class=operator>)</span></pre><pre class=success><span class=string>"&lt;span<wbr>&nbsp;class=keyword>function&lt;/span>&lt;wbr>&amp;nbsp;get&lt;span<wbr>&nbsp;class=operator>(&lt;/span>table,&lt;wbr>&amp;nbsp;key&lt;span<wbr>&nbsp;class=operator>)&lt;/span>&lt;wbr>&amp;nbsp;&lt;wbr>&amp;nbsp;&lt;wbr>&amp;nbsp;&lt;wbr>&amp;nbsp;&lt;span<wbr>&nbsp;class=keyword>return&lt;/span>&lt;wbr>&amp;nbsp;table&lt;span<wbr>&nbsp;class=operator>[&lt;/span>key&lt;span<wbr>&nbsp;class=operator>]&lt;/span>&lt;span<wbr>&nbsp;class=keyword>end&lt;/span>"</span></pre></p></dd></dl>
+<pre class=run><code style=white-space:pre class=language-lua>local highlight = require "highlight"</p><p>return highlight.highlight( ""
+.. "function get(table, key)"
+.. "    return table[key]"
+.. "end"
+)</code></pre><pre class=success><code style=white-space:pre class=language-lua>"&lt;span class=keyword>function&lt;/span>&lt;wbr>&nbsp;get&lt;span class=operator>(&lt;/span>table,&lt;wbr>&nbsp;key&lt;span class=operator>)&lt;/span>&lt;wbr>&nbsp;&lt;wbr>&nbsp;&lt;wbr>&nbsp;&lt;wbr>&nbsp;&lt;span class=keyword>return&lt;/span>&lt;wbr>&nbsp;table&lt;span class=operator>[&lt;/span>key&lt;span class=operator>]&lt;/span>&lt;span class=keyword>end&lt;/span>"</code></pre></p></dd></dl>
   </div><div id=navigation>
 <a href=index.html>> Index</a><h2> Simple Syntax Highlighting</h2><a class=func-link href=#M.highlight>M.highlight (string)</a>
   </div><footer style=margin-right>
     generated with docl
-  </footer></body></html>
+  </footer>
+
+<script async src=highlight.js></script></body></html>

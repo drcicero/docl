@@ -5,39 +5,30 @@
 
 </head><body>
   <div id=content>
-<h1> Docl - simple documentation for lua</h1><p>  <code>docl<wbr>&nbsp;<span class=operator>[</span>options<span class=operator>]</span><wbr>&nbsp;FILES</code><p></p>  Generate the documentation files. Create files at
-  <code>OUTPUTDIR<span class=operator>/</span>path.to.file.html</code> for every specified file and an <code>index.html</code>
-  file, containing a summary.<p></p>  For example the documentation of <code>src<span class=operator>/</span>plugins<span class=operator>/</span>vector.lua</code> would be placed
-  at <code>docs<span class=operator>/</span>src.plugins.vector.lua.html</code>.<p></p>  Before generating the documentation the first time, you need to create the
-  output-directory and place a style.css there. You can create the directory
-  and place the default style there either using your favorite file-manager or
-  by executing:<p></p>  <code>mkdir<wbr>&nbsp;doc;<wbr>&nbsp;cp<wbr>&nbsp;<span class=operator>/</span>path<span class=operator>/</span>to<span class=operator>/</span>docl<span class=operator>/</span>default_style.css<wbr>&nbsp;doc<span class=operator>/</span>style.css</code><p></p>  Then you can generate the documentation by executing:<p></p>  <code>cd<wbr>&nbsp;path<span class=operator>/</span>to<span class=operator>/</span>lua<span class=operator>/</span>files;<wbr>&nbsp;.<span class=operator>/</span>path<span class=operator>/</span>to<span class=operator>/</span>docl<span class=operator>/</span>docl<wbr>&nbsp;--dir<wbr>&nbsp;doc<wbr>&nbsp;*.lua</code>
-<dl><h2>Options</h2><dt>-v </dt><dd>show version number and exit.</dd><dt>-h </dt><dd>show this help and exit.</dd><dt>--dir  &lt;ARG></dt><dd>specify output directory.
-      default is <code>doc</code>.</dd><dt>--lift  &lt;ARG></dt><dd>lift a specific file. eg. make its documentation into the index page.
-      you probably want to do that with the main file.</dd><dt>--source  &lt;ARG></dt><dd>if <code>true</code>, include a button on every page to show the source of the
-      documentation.
-      default is <code>false</code>.</dd><dt>--suffix  &lt;ARG></dt><dd>the &lt;title> tag is constructed as <code>MODULETITLE<wbr>&nbsp;-<wbr>&nbsp;SUFFIX</code>.
-      recommended value is <code>MYPOGRAMM<wbr>&nbsp;Documentation</code>.
-      default is <code>Documentation</code>.</dd></dl></p><p> <h2>Note</h2>
+<h1> Docl - simple documentation for lua</h1><p><code>docl<wbr>&nbsp;<span class=operator>[</span>options<span class=operator>]</span><wbr>&nbsp;FILES</code><p></p>Generate the documentation files. Create files at <code>OUTPUTDIR<span class=operator>/</span>path.to.file.html</code> for every specified file and an <code>index.html</code> file, containing a summary.<p></p>For example the documentation of <code>src<span class=operator>/</span>plugins<span class=operator>/</span>vector.lua</code> would be placed at <code>docs<span class=operator>/</span>src.plugins.vector.lua.html</code>.<p></p>Before generating the documentation the first time, you need to create the output-directory and place a style.css there. You can create the directory and place the default style there either using your favorite file-manager or by executing:<p></p><code>mkdir<wbr>&nbsp;doc;<wbr>&nbsp;cp<wbr>&nbsp;<span class=operator>/</span>path<span class=operator>/</span>to<span class=operator>/</span>docl<span class=operator>/</span>default_style.css<wbr>&nbsp;doc<span class=operator>/</span>style.css</code><p></p>Then you can generate the documentation by executing:<p></p><code>cd<wbr>&nbsp;path<span class=operator>/</span>to<span class=operator>/</span>lua<span class=operator>/</span>files;<wbr>&nbsp;.<span class=operator>/</span>path<span class=operator>/</span>to<span class=operator>/</span>docl<span class=operator>/</span>docl<wbr>&nbsp;--dir<wbr>&nbsp;doc<wbr>&nbsp;*.lua</code>
+<dl><h2>Options</h2><dt>--dir  &lt;ARG></dt><dd>specify output directory. default is <code>doc</code>.</dd><dt>--lift  &lt;ARG></dt><dd>lift a specific file. eg. make its documentation into the index page. you probably want to do that with the main file.</dd><dt>--suffix  &lt;ARG></dt><dd>the &lt;title> tag is constructed as <code>MODULETITLE<wbr>&nbsp;-<wbr>&nbsp;SUFFIX</code>. recommended value is <code>MYPOGRAMM<wbr>&nbsp;Documentation</code>. default is <code>Documentation</code>.</dd><dt>--highlight  &lt;ARG></dt><dd>choose a syntax-highligher. default is <code>lua</code>.<ul><li><strong>lua</strong><br>produces already colored html output, but big files.</ul><ul><li><strong>js</strong><br>produces smaller files, but syntax-highlighting is only visible if js is enabled.</ul><ul><li><strong>none</strong><br>no syntax-highlighting</ul></dd><dt>--source  &lt;ARG></dt><dd>choose to show the source code in the page default is <code>false</code>.<ul><li><strong>false</strong><br>dont include source code</ul><ul><li><strong>true</strong><br>include a button on every page to show the source code.</ul></dd><dt>-v </dt><dd>show version number and exit.</dd><dt>-h </dt><dd>show this help and exit.</dd></dl></p><p> <h2>Note</h2>
  docl names the documentation of files relative to the working directory.</p><p> if all files to be documented are inside a specific directory, you
  should <code>cd</code> (change-directory) there, before invoking <code>docl</code>.</p><p> For example if you are at <code><span class=operator>/</span>home<span class=operator>/</span>james<span class=operator>/</span></code> and you call
-<pre>$<wbr>&nbsp;docl<wbr>&nbsp;my-programs<span class=operator>/</span>my-app<span class=operator>/</span>src<span class=operator>/</span>lua<span class=operator>/</span>*.lua</pre>
+<pre><code style=white-space:pre class=language-lua>$ docl my-programs/my-app/src/lua/*.lua</code></pre>
  then docl will name the output files <code>my-programs.my-app.src.lua.*.lua.html</code>
  (which is pretty dumb).</p><p> if you want them to be called only <code>*.lua.html</code> change the
  directory before invoking docl.
-<pre>$<wbr>&nbsp;cd<wbr>&nbsp;<span class=operator>/</span>home<span class=operator>/</span>james<span class=operator>/</span>my-programs<span class=operator>/</span>my-app<span class=operator>/</span>src<span class=operator>/</span>lua<br>$<wbr>&nbsp;docl<wbr>&nbsp;*.lua</pre></p><p> <h2>Examples</h2>
+<pre><code style=white-space:pre class=language-lua>$ cd /home/james/my-programs/my-app/src/lua
+$ docl *.lua</code></pre></p><p> <h2>Examples</h2>
  Here are some usage examples:</p><p> <code>.<span class=operator>/</span>docl<wbr>&nbsp;*.lua</code></p><p> document all .lua files in this directory</p><p> <code>.<span class=operator>/</span>docl<wbr>&nbsp;*.lua<wbr>&nbsp;*<span class=operator>/</span>*.lua</code></p><p> document all .lua files in this directory and all subdirectories
  (but not recursive!)</p><p> <code>.<span class=operator>/</span>docl<wbr>&nbsp;-d<wbr>&nbsp;html-doc<wbr>&nbsp;$$<span class=operator>(</span><span class=operator>(</span>find<wbr>&nbsp;-name<wbr>&nbsp;<span class=string>"*.lua"</span><span class=operator>)</span><span class=operator>)</span></code></p><p> recursively document all files ending in .lua and put output into <code>html-doc<span class=operator>/</span></code></p><p> <h2>Links</h2></p><p> <a href=http://github.com/drcicero/docl>Github Repository</a></p><p> <a href=http://drcicero.github.io/drcicero/docl/LICENSE.txt>Docls License (MIT)</a><p><dl></dl><h2>Modules</h2><ul style=list-style:none;padding:0 id=content-list><li><a class=list-link href='doc.lua.html'><div>doc.lua</div><div> helper functions</div></a></li>
-  <li><a class=list-link href='help.lua.html'><div>help.lua</div><div> The help string</div></a></li>
+  <li><a class=list-link href='help.lua.html'><div>help.lua</div><div> Help</div></a></li>
   <li><a class=list-link href='highlight.lua.html'><div>highlight.lua</div><div> Simple Syntax Highlighting</div></a></li>
   <li><a class=list-link href='parseopt.lua.html'><div>parseopt.lua</div><div> Simple shell parsing</div></a></li>
   <li><a class=list-link href='repr.lua.html'><div>repr.lua</div><div> Readable tostring</div></a></li></ul style=list-style:none;padding:0>
   </div><div id=navigation>
 <h2> Docl - simple documentation for lua</h2><h2>Modules</h2><ul style=list-style:none;padding:0 id=content-list><li><a class=list-link href='doc.lua.html'><div>doc.lua</div><div> helper functions</div></a></li>
-  <li><a class=list-link href='help.lua.html'><div>help.lua</div><div> The help string</div></a></li>
+  <li><a class=list-link href='help.lua.html'><div>help.lua</div><div> Help</div></a></li>
   <li><a class=list-link href='highlight.lua.html'><div>highlight.lua</div><div> Simple Syntax Highlighting</div></a></li>
   <li><a class=list-link href='parseopt.lua.html'><div>parseopt.lua</div><div> Simple shell parsing</div></a></li>
   <li><a class=list-link href='repr.lua.html'><div>repr.lua</div><div> Readable tostring</div></a></li></ul style=list-style:none;padding:0>
   </div><footer style=margin-right>
     generated with docl
-  </footer></body></html>
+  </footer>
+
+<script async src=highlight.js></script></body></html>
