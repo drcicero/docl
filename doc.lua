@@ -95,6 +95,8 @@ end
 -- This module depends on the math module.
 require "math"
 
+
+
 -- ...
 -- rest of the file
 ]]
@@ -116,7 +118,21 @@ function doc.parse_file (file, links, options)
       function (x) return doc.wrap(x:gsub("<", "&lt;"), "code", " style=white-space:pre class=language-lua") end
 
  -- sub functions {
-        local function end_codeblock (line)
+        local start_codeblock,  continue_codeblock,  end_codeblock
+        local start_doccomment, continue_doccomment, end_doccomment
+
+        function start_codeblock (line, level)
+            codeblock = {}
+            if line:sub(5 + #level):find("[^ ]") then
+                table.insert(codeblock, line:sub(5))
+            end
+            codeblock.ending = "]" .. level .. "]"
+            codeblock.firstline = i
+        end
+        function continue_codeblock (line)
+            table.insert(codeblock, line)
+        end
+        function end_codeblock (line)
             if doc.startswith(line, "--@") then
                 codeblock.kw = (line:sub(4) .. " "):match("^(.-) ")
                 codeblock.argument = line:sub(#codeblock.kw+4)
@@ -131,7 +147,14 @@ function doc.parse_file (file, links, options)
             codeblock = nil -- end codeblock
         end
 
-        local function end_doccomment (line)
+        function start_doccomment (line)
+            if doccomment then end_doccomment("") end
+            doccomment = {first = doc.link(line, links, file, i)}
+        end
+        function continue_doccomment (line)
+            table.insert(doccomment, doc.link(line, links, file, i))
+        end
+        function end_doccomment (line)
             -- the first doccomment is the section-description
             if not sections[#sections].first then
                 if options.__source == "true" and #sections == 1 then
@@ -151,31 +174,9 @@ function doc.parse_file (file, links, options)
             doccomment = nil -- end doccomment
         end
 
-        local function start_doccomment (line)
-            if doccomment then end_doccomment("") end
-            doccomment = {first = doc.link(line, links, file, i)}
-        end
-
-        local function start_codeblock (line, level)
-            codeblock = {}
-            if line:sub(5 + #level):find("[^ ]") then
-                table.insert(codeblock, line:sub(5))
-            end
-            codeblock.ending = "]" .. level .. "]"
-            codeblock.firstline = i
-        end
-
         local function start_section (line)
             start_doccomment(line)
             table.insert(sections, {})
-        end
-
-        local function continue_doccomment (line)
-            table.insert(doccomment, doc.link(line, links, file, i))
-        end
-
-        local function continue_codeblock (line)
-            table.insert(codeblock, line)
         end
 
         local function parse_line(line)

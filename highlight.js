@@ -7,13 +7,21 @@ function highlight(string) {
 
     var wrapclass = function(klass) { return function (_, x, y) {
         inserts[i] = "<span class=" + klass + ">" + x + "</span>";
-        console.log(x, y);
         return "$" + i++ + ";" + y;
     }};
 
     var suspend = function(x) {
         inserts[i] = ""+x;
         return "$" + i++ + ";";
+    };
+
+    var plug = function(x) {
+        var v = inserts[parseInt(x.slice(1,-1))];
+        return v===undefined? x: v;
+    };
+    var plug2 = function(x) {
+        var v = inserts[parseInt(x.slice(1,-1))];
+        return v==="$" || v===undefined? x: v;
     };
 
     return (string .replace(/&/g, "&amp;") .replace(/</g, "&lt;") + "<br>")
@@ -37,9 +45,9 @@ function highlight(string) {
 
         .replace(/(elseif|do|in|if|for|end|else|then|break|until|local|while|return|function)(<)/g, wrapclass("keyword"))
 
-        .replace(/\$.+?;/g, function(x) {return inserts[parseInt(x.slice(1,-1))];})
-        .replace(/\$.+?;/g, function(x) {return inserts[parseInt(x.slice(1,-1))];})
-        .replace(/\$.+?;/g, function(x) {return inserts[parseInt(x.slice(1,-1))];})
+        .replace(/\$.+?;/g, plug2)
+        .replace(/\$.+?;/g, plug2)
+        .replace(/\$.+?;/g, plug)
 
         .slice(0, -4);
 }
