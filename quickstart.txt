@@ -1,7 +1,6 @@
 --- Quickstart guide
 -- Prequesites: lua, a shell
 --
--- Either open 
 -- Open a terminal and execute
 --[[$ git clone https://github.com/drcicero/docl.git
 ]]
@@ -20,7 +19,7 @@
 #! /usr/bin/env sh
 ./path/to/docl/docl --dir doc *.lua
 ]]
--- Now you can run docl by typing 'sh make_docs.sh' Yaj!
+-- Now you can run docl by typing 'sh make_docs.sh' Jay!
 --
 -- Read more about the <a href=docl.html>Command Line Interface</a>.
 
