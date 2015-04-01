@@ -66,7 +66,6 @@ function M.highlight(string)
 
         :gsub("$(.-);", function (x) return inserts[tonumber(x)] end)
         :gsub("$(.-);", function (x) return inserts[tonumber(x)] end)
-        :gsub("$(.-);", function (x) return inserts[tonumber(x)] end)
 
         :sub(1, -2)
 end

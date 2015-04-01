@@ -1,16 +1,19 @@
 #! /usr/bin/env lua
 
---- Docl - simple documentation for lua
---[[
-local help = require "help"
-return help.webhelp
+local docldir, file = arg[0]:match'(.*/)(.*)'
+package.path = docldir .. "?.lua;" .. package.path
+package.path = docldir .. "src/?.lua;" .. package.path
+
+--- Command line interface
+--[[return (require "help").webhelp
 ]]--@INSERT_AS_TEXT
 --
 -- <h2>Note</h2>
--- docl names the documentation of files relative to the working directory.
 --
--- if all files to be documented are inside a specific directory, you
--- should 'cd' (change-directory) there, before invoking 'docl'.
+-- Docl names the documentation of files relative to the working directory.
+--
+-- If all files to be documented are inside a specific directory, you
+-- should change your directory there, before invoking docl.
 --
 -- For example if you are at '/home/james/' and you call
 --[[
@@ -22,65 +25,36 @@ $ docl my-programs/my-app/src/lua/*.lua
 -- if you want them to be called only '*.lua.html' change the
 -- directory before invoking docl.
 --[[
-$ cd /home/james/my-programs/my-app/src/lua
+$ cd my-programs/my-app/src/lua
 $ docl *.lua
 ]]
 --
 -- <h2>Examples</h2>
--- Here are some usage examples:
 --
--- './docl *.lua'
---
+--[[./docl *.lua
+]]
 -- document all .lua files in this directory
 --
--- './docl *.lua */*.lua'
---
+--[[./docl *.lua */*.lua
+]]
 -- document all .lua files in this directory and all subdirectories
 -- (but not recursive!)
 --
--- './docl -d html-doc $$((find -name "*.lua"))'
---
+--[[./docl -d html-doc $$((find -name "*.lua"))
+]]
 -- recursively document all files ending in .lua and put output into 'html-doc/'
---
--- <h2>Links</h2>
---
--- <a href=http://github.com/drcicero/docl>Github Repository</a>
---
--- <a href=http://drcicero.github.io/drcicero/docl/LICENSE.txt>Docls License (MIT)</a>
-
-local docldir, file = arg[0]:match'(.*/)(.*)'
-package.path = docldir .. "?.lua;" .. package.path
 
 local help = require "help"
-local doc = require "doc"
-local opt = require "parseopt"
-
-local function does_directory_exist(dir)
-  local f = io.open(dir .. "/index.html", "r")
-  local content = ""
-  if f then
-    content = f:read("*a")
-    f:close()
-  end
-
-  local f = io.open(dir .. "/index.html", "w")
-  if not f then
-    return false
-
-  else 
-    f:write(content)
-    f:close()
-    return true
-  end
-
-end
+local doc  = require "doc"
+local opt  = require "parseopt"
+local myio = require "myio"
 
 local function handle_shell_options ()
   local options = opt.parse(arg, help.default_options)
   if not options then return end
 
   if options._v then
-    print("This docl version 1.2 - have fun!")
+    print("This docl version 1.3 - have fun!")
     return
   end
 
@@ -95,7 +69,7 @@ local function handle_shell_options ()
     return
   end
   
-  if not does_directory_exist(options.__dir) then
+  if not myio.is_dir(options.__dir) then
     print("ERROR: the directory '" .. options.__dir .. "' does not exist. Please")
     print(" * create it by executing 'mkdir " .. options.__dir .. "', or")
     print(" * choose another output-directory by supplying the option '--dir OUTPUTDIR'")
@@ -118,49 +92,24 @@ if options then
   local theliftfile
 
   for i, file in ipairs(options) do
-    print("* " .. file)
-    local sections = doc.parse_file(file, links, options)
-    local result = doc.gen_file(sections, options)
+    if file ~= options.__lift then
+      print("* " .. file)
+      local sections = doc.parse_file(file, links, options)
+      local result = doc.gen_file(sections, options)
 
-    if file == options.__lift then
-      theliftfile = {sections=sections, result=result}
-
-    elseif result ~= false then
       local path = file:gsub("/", ".")
-      local f = io.open(options.__dir .. path .. ".html", "w")
-      f:write(result)
-      f:close()
+      myio.write(options.__dir .. path .. ".html", result)
 
       local desc = sections[1].first and sections[1].first.first or ""
       table.insert(toc, {path, desc})
-
-    else
-      print("  NO DOCS FOR " .. file)
     end
   end
-  if not theliftfile then
-    local sections = doc.parse_file(file, links, options)
-    local result = doc.gen_file(sections, options)
-    theliftfile = {sections=sections, result=result}
-  end
-
 
   local content, navigation = "", ""
-
-  if theliftfile then
-    for i, section in ipairs(theliftfile.sections) do
-      local description = theliftfile.sections[i].first or {}
-      title = description.first
-
-      content = content
-        .. doc.wrap(title, i==1 and "h1" or "h2")
-        .. "<p>"..table.concat(description, "\n"):gsub("\n\n", "</p><p>").."<p>"
-        .. doc.content_template(section)
-
-      navigation = navigation
-        .. doc.wrap(title, i==1 and "h2" or "h3")
-        .. doc.nav_template(section)
-    end
+  if not theliftfile and options.__lift then
+    print("* " .. options.__lift)
+    local sections = doc.parse_file(options.__lift, links, options)
+    content, navigation = doc.sections2html(sections, options)
   end
 
   htmltoc = doc.wrap(options.__lift and "Modules" or "Content", "h2")
@@ -168,14 +117,13 @@ if options then
         ("<li><a class=list-link href='%s.html'><div>%s</div><div>%s</div></a></li>")
           :format(x[1], x[1], x[2])
       end), "\n  "),
-      "ul style=list-style:none;padding:0", " id=content-list")
+      "ul", " id=content-list style=list-style:none;padding:0")
 
   content = content .. htmltoc
   navigation = navigation .. htmltoc
 
-  local file = io.open(options.__dir .. "index.html", "w")
-  file:write( doc.file_template(content, navigation, title, options) )
-  file:close()
+  myio.write(options.__dir .. "index.html",
+    doc.file_template(content, navigation, title or "", options))
 
   local filestable = {}
   for i,e2 in ipairs(options) do
@@ -186,6 +134,16 @@ if options then
     if not filestable[url] then
       print("WARNING: broken link in file " .. e.file .. ":" .. e.line .. " to " .. url .. "#" .. hash)
     end
+  end
+
+  if not myio.exists(options.__dir .. "style.css") then
+    print("created style.css")
+    myio.copy(docldir .. "data/style.css", options.__dir .. "docl.css")
+  end
+
+  if options.__highlight == "js" then
+    print("created highlight.js")
+    myio.copy(docldir .. "data/highlight.js", options.__dir .. "highlight.js")
   end
 end
 

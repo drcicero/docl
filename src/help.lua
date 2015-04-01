@@ -24,19 +24,19 @@ end
 --- M.help
 -- an description string for invoking the 'docl' command
 M.help = [[
-'docl [options] FILES'
+  'docl [options] --dir <output-directory> FILES'
 
-Generate the documentation files. Create files at 'OUTPUTDIR/path.to.file.html' for every specified file and an 'index.html' file, containing a summary.
+Generate the html-documentation for the files 'FILES' in the output-directory.
 
-For example the documentation of 'src/plugins/vector.lua' would be placed at 'docs/src.plugins.vector.lua.html'.
+Before generating the documentation the first time, you need to create the output-directory. For example, to create the directory 'doc' open a terminal and execute:
 
-Before generating the documentation the first time, you need to create the output-directory and place a style.css there. You can create the directory and place the default style there either using your favorite file-manager or by executing:
-
-'mkdir doc; cp /path/to/docl/default_style.css doc/style.css'
+  '$ mkdir doc'
 
 Then you can generate the documentation by executing:
 
-'cd path/to/lua/files; ./path/to/docl/docl --dir doc *.lua'
+  '$ cd path/to/lua/files'
+
+  '$ ./path/to/docl/docl --dir doc *.lua'
 ]]
 
 

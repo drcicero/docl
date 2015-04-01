@@ -1,0 +1,26 @@
+--- Quickstart guide
+-- Prequesites: lua, a shell
+--
+-- Either open 
+-- Open a terminal and execute
+--[[$ git clone https://github.com/drcicero/docl.git
+]]
+-- This will download 'docl' to the directory docl.
+--
+-- Now go into your source folder. Image you want to put the documentation into
+-- the directory doc. First lets create it.
+--[[$ mkdir doc
+]]
+-- Now run docl on your lua files.
+--[[$ ./path/to/docl/docl --dir doc *.lua
+]]
+-- You should write this line every time you use docl. So lets create a file
+-- called make_docs.sh and write the following into it:
+--[[
+#! /usr/bin/env sh
+./path/to/docl/docl --dir doc *.lua
+]]
+-- Now you can run docl by typing 'sh make_docs.sh' Yaj!
+--
+-- Read more about the <a href=docl.html>Command Line Interface</a>.
+

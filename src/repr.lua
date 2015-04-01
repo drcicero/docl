@@ -1,7 +1,7 @@
 --- Readable tostring
 --[[
 repr = (require "repr").repr
-]]--@RUN
+]]--@RUNHIDDEN
 
 local M = {}
 

@@ -19,12 +19,13 @@ function highlight(string) {
         var v = inserts[parseInt(x.slice(1,-1))];
         return v===undefined? x: v;
     };
+
     var plug2 = function(x) {
         var v = inserts[parseInt(x.slice(1,-1))];
         return v==="$" || v===undefined? x: v;
     };
 
-    return (string .replace(/&/g, "&amp;") .replace(/</g, "&lt;") + "<br>")
+    return (string + "<br>")
 
         .replace(/\n/g, "<br>")
         .replace(/\t/g, "    ")

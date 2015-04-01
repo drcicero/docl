@@ -1,0 +1,31 @@
+--- Docl - simple documentation for lua
+--
+-- Docl is a super simple tool for documenting your Lua code.
+--
+-- You write a function like this:
+--[[
+--- Example Module
+-- This module contains a example function.
+
+--- Add two numbers.
+-- returns the sum of x and y.
+function adder(x, y)
+  return x + y
+end
+]]
+--
+-- And docl generates this beautiful page for you:
+-- <div style="border:1em solid #ddd; width: 100%; padding:1em; box-sizing:border-box">
+--   <h1>Example Module</h1><p>
+--   This module contains a example function.
+--   <dl><dt id="adder"><a href="#adder">adder (x, y)</a></dt>
+--   <dd><p> Add two numbers. returns the sum of x and y.</p></dd></dl>
+-- </div>
+--
+-- <h2>Links</h2>
+--
+-- License: <a href=http://drcicero.github.io/docl/LICENSE.txt>MIT</a><br>
+-- Source: <a href=http://github.com/drcicero/docl>Github</a><br>
+--
+-- <style>#content > h1{font-size:3em}</style>
+

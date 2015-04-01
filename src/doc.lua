@@ -1,8 +1,8 @@
 --- helper functions
 -- Functions for parsing, running code samples and html generation.
 --[[
-  doc = require "doc"
-]]--@RUN
+doc = require "doc"
+]]--@RUNHIDDEN
 -- See #doc.parse for how it expects your files to be written.
 
 local highlight = (require "highlight").highlight
@@ -60,6 +60,9 @@ function doc.codeblock2html (codeblock, env, highlight)
         else
             return "success", string
         end
+
+    elseif codeblock.kw == "RUNHIDDEN" then
+        return "run", "<pre class=run>" .. highlight(code) .. "</pre>"
 
     elseif codeblock.kw == "RUN" then
         return "run", "<pre class=run>" .. highlight(code) .. "</pre>"
@@ -122,6 +125,7 @@ function doc.parse_file (file, links, options)
         local start_doccomment, continue_doccomment, end_doccomment
 
         function start_codeblock (line, level)
+            end_docparagraph()
             codeblock = {}
             if line:sub(5 + #level):find("[^ ]") then
                 table.insert(codeblock, line:sub(5))
@@ -144,6 +148,7 @@ function doc.parse_file (file, links, options)
 
          -- merge codeblock output into doccomment
             table.insert(doccomment, string)
+            table.insert(doccomment, "") -- paragraph break
             codeblock = nil -- end codeblock
         end
 
@@ -152,6 +157,7 @@ function doc.parse_file (file, links, options)
             doccomment = {first = doc.link(line, links, file, i)}
         end
         function continue_doccomment (line)
+            if #line==0 then end_docparagraph() end
             table.insert(doccomment, doc.link(line, links, file, i))
         end
         function end_doccomment (line)
@@ -172,6 +178,19 @@ function doc.parse_file (file, links, options)
             end
 
             doccomment = nil -- end doccomment
+        end
+        function end_docparagraph()
+            local len = #doccomment
+            local last_newline
+            for i=len,1,-1 do
+                if doccomment[i] == "" then
+                    last_newline = i+1
+                    break
+                end
+            end
+            if not last_newline then last_newline = 1 end
+            doccomment[last_newline] = "<p>" .. (doccomment[last_newline] or "")
+            doccomment[#doccomment] = doccomment[#doccomment] .. "</p>"
         end
 
         local function start_section (line)
@@ -220,35 +239,33 @@ end
 
 --- Generate documentation and run unit tests for list of sections.
 function doc.gen_file (sections, options)
-    local content, navigation = "", "<a href=index.html>> Index</a>"
+    local content, navigation = doc.sections2html(sections, options)
+    return doc.file_template(content, navigation, sections.title .. " - " .. options.__suffix, options)
+end
+
+function doc.sections2html (sections, options)
+    local content, navigation = "<a href=index.html>" .. options.__suffix .. "</a> » <br>", ""
     for i, section in ipairs(sections) do
         local description = sections[i].first or {}
         local title = description.first or "TITLE"
 
         content = content
-            .. doc.wrap(title, i==1 and "h1" or "h2")
-            .. "<p>"..table.concat(description, "\n"):gsub("\n\n", "</p><p>").."<p>"
+            .. doc.wrap(title, i==1 and "h1" or "h2") .. "\n"
+            .. table.concat(description, "\n")
             .. doc.content_template(section)
 
         navigation = navigation
             .. doc.wrap(title, i==1 and "h2" or "h3")
             .. doc.nav_template(section)
     end
-
-
-    if content ~= "<h1>Reference</h1><p><p><dl></dl>" then
-      return doc.file_template(content, navigation, sections.title .. " - " .. options.__suffix, options)
-
-    else
-      return false
-    end
+    return content, navigation
 end
 
 ---
 function doc.content_template(section)
     return doc.wrap(
-        table.concat(doc.map(section, function(def)
-            return doc.def_template(def.first, "<p>"..table.concat(def, "\n"):gsub("\n\n", "</p><p>").."</p>" ) end
+        table.concat(doc.map(section, function(x)
+            return doc.def_template(x.first, table.concat(x, "\n") ) end
         ))
     , "dl")
 end
