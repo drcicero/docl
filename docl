@@ -35,12 +35,12 @@ $ docl *.lua
 ]]
 -- document all .lua files in this directory
 --
---[[./docl *.lua */*.lua
+--[[./docl *.lua --lift main.lua */*.lua
 ]]
 -- document all .lua files in this directory and all subdirectories
--- (but not recursive!)
+-- (but not recursive!). make main.lua the index file / startpage.
 --
---[[./docl -d html-doc $$((find -name "*.lua"))
+--[[./docl --dir html-doc $$((find -name "*.lua"))
 ]]
 -- recursively document all files ending in .lua and put output into 'html-doc/'
 
