@@ -1,0 +1,37 @@
+<!doctype html><html><head>
+  <meta charset=utf-8>
+  <title> Quickstart guide - Docl Dokumentation</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+
+</head><body>
+  <div id=content>
+<a href=index.html>Docl Dokumentation</a> » <br><h1> Quickstart guide</h1>
+<p> Prequesites: lua, a shell</p>
+
+<p> Open a terminal and execute</p>
+<pre><code style=white-space:pre class=language-lua>$ git clone https://github.com/drcicero/docl.git</code></pre>
+
+<p> This will download <code>docl</code> to the directory docl.</p>
+
+<p> Now go into your source folder. Image you want to put the documentation into
+ the directory doc. First lets create it.</p>
+<pre><code style=white-space:pre class=language-lua>$ mkdir doc</code></pre>
+
+<p> Now run docl on your lua files.</p>
+<pre><code style=white-space:pre class=language-lua>$ ./path/to/docl/docl --dir doc *.lua</code></pre>
+
+<p> You should write this line every time you use docl. So lets create a file
+ called make_docs.sh and write the following into it:</p>
+<pre><code style=white-space:pre class=language-lua>#! /usr/bin/env sh
+./path/to/docl/docl --dir doc *.lua</code></pre>
+
+<p> Now you can run docl by typing <code>sh<wbr>&nbsp;make_docs.sh</code> Jay!</p>
+
+ Read more about the <a href=docl.html>Command Line Interface</a>.<dl></dl>
+  </div><div id=navigation>
+<h2> Quickstart guide</h2>
+  </div><footer style=margin-right>
+    generated with docl
+  </footer>
+
+<script async src=highlight.js></script></body></html>

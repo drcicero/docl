@@ -1,29 +1,58 @@
 <!doctype html><html><head>
   <meta charset=utf-8>
-  <title>Reference</title>
+  <title> Command line interface - Docl Dokumentation</title>
   <link href="style.css" rel="stylesheet" type="text/css">
 
 </head><body>
   <div id=content>
-<h1> Docl - a simple lua documentation for lua code tool</h1><p><h2>Synopsis</h2>  <code>docl<wbr>&nbsp;<span class=operator>[</span>options<span class=operator>]</span><wbr>&nbsp;FILES</code><p></p>  Generate the documentation files. Create files at
-  <code>OUTPUTDIR<span class=operator>/</span>path.to.file.html</code> for every specified file and an <code>index.html</code>
-  file, containing a summary.<p></p>  For example the documentation of <code>src<span class=operator>/</span>plugins<span class=operator>/</span>vector.lua</code> would be placed
-  at <code>docs<span class=operator>/</span>src.plugins.vector.lua.html</code>.<p></p><h2>Options</h2>  <code>-v</code>
-      show version number and exit<p></p>  <code>-h</code>
-      show this help and exit<p></p>  <code>--dir<wbr>&nbsp;doc</code>
-      specify output directory, default is <code>doc</code><p></p>  <code>--lift<wbr>&nbsp;main.lua</code>
-      lift a specific file. eg. make its documentation into the index page.
-      you probably want to do that with the <code>ma<span class=keyword>in</span></code> file.<p></p>  <code>--source<wbr>&nbsp;<span class=operator>(</span>true|false<span class=operator>)</span></code>
-      if <code>true</code>, include a button on every page to show the source of the
-      documentation, default is <code>true</code></p><p><p><dl></dl><h2> Note</h2><p>  docl names the documentation of files relative to the working directory.</p><p>  if all files to be documented are inside a specific directory, you
-  should <code>cd</code> (change-directory) there, before invoking <code>docl</code>.</p><p>  For example if you are at <code><span class=operator>/</span>home<span class=operator>/</span>james<span class=operator>/</span></code> and you call</p><p>    <code>docl<wbr>&nbsp;my-programs<span class=operator>/</span>my-app<span class=operator>/</span>src<span class=operator>/</span>lua<span class=operator>/</span>*.lua</code></p><p>  then docl will name the output files <code>my-programs.my-app.src.lua.*.lua.html</code>
-  (which is pretty dumb).</p><p>  if you want them to be called only *.lua.html simply <code>cd</code> (change the
-  directory) before invoking docl.</p><p>    <code>cd<wbr>&nbsp;<span class=operator>/</span>home<span class=operator>/</span>james<span class=operator>/</span>my-programs<span class=operator>/</span>my-app<span class=operator>/</span>src<span class=operator>/</span>lua;<wbr>&nbsp;docl<wbr>&nbsp;*.lua</code></p><p>  then docl will name the output files <code>*.lua.html</code> which is much better.
-<p><dl></dl><h2> Examples</h2><p> Here are some usage examples:</p><p> <code>.<span class=operator>/</span>docl<wbr>&nbsp;*.lua</code></p><p> document all .lua files in this directory</p><p> <code>.<span class=operator>/</span>docl<wbr>&nbsp;*.lua<wbr>&nbsp;*<span class=operator>/</span>*.lua</code></p><p> document all .lua files in this directory and all subdirectories
- (but not recursive!)</p><p> <code>.<span class=operator>/</span>docl<wbr>&nbsp;-d<wbr>&nbsp;html-doc<wbr>&nbsp;$$<span class=operator>(</span><span class=operator>(</span>find<wbr>&nbsp;-name<wbr>&nbsp;<span class=string>"*.lua"</span><span class=operator>)</span><span class=operator>)</span></code></p><p> recursively document all files ending in .lua and put output into <code>html-doc<span class=operator>/</span></code>
-<p><dl></dl>
+<a href=index.html>Docl Dokumentation</a> » <br><h1> Command line interface</h1>
+<p></p>
+  <code>docl<wbr>&nbsp;<span class=operator>[</span>options<span class=operator>]</span><wbr>&nbsp;--dir<wbr>&nbsp;&amp;lt;output-directory><wbr>&nbsp;FILES</code><p></p>Generate the html-documentation for the files <code>FILES</code> in the output-directory.<p></p>Before generating the documentation the first time, you need to create the output-directory. For example, to create the directory <code>doc</code> open a terminal and execute:<p></p>  <code>$<wbr>&nbsp;mkdir<wbr>&nbsp;doc</code><p></p>Then you can generate the documentation by executing:<p></p>  <code>$<wbr>&nbsp;cd<wbr>&nbsp;path<span class=operator>/</span>to<span class=operator>/</span>lua<span class=operator>/</span>files</code><p></p>  <code>$<wbr>&nbsp;.<span class=operator>/</span>path<span class=operator>/</span>to<span class=operator>/</span>docl<span class=operator>/</span>docl<wbr>&nbsp;--dir<wbr>&nbsp;doc<wbr>&nbsp;*.lua</code>
+<dl><h2>Options</h2><dt>--dir  &lt;ARG></dt><dd>specify output directory. default is <code>doc</code>.</dd><dt>--lift  &lt;ARG></dt><dd>lift a specific file. eg. make its documentation into the index page. you probably want to do that with the main file.</dd><dt>--suffix  &lt;ARG></dt><dd>the &lt;title> tag is constructed as <code>MODULETITLE<wbr>&nbsp;-<wbr>&nbsp;SUFFIX</code>. recommended value is <code>MYPOGRAMM<wbr>&nbsp;Documentation</code>. default is <code>Documentation</code>.</dd><dt>--highlight  &lt;ARG></dt><dd>choose a syntax-highligher. default is <code>lua</code>.<ul><li><strong>lua</strong><br>produces already colored html output, but big files.</ul><ul><li><strong>js</strong><br>produces smaller files, but syntax-highlighting is only visible if js is enabled.</ul><ul><li><strong>none</strong><br>no syntax-highlighting</ul></dd><dt>--source  &lt;ARG></dt><dd>choose to show the source code in the page default is <code>false</code>.<ul><li><strong>false</strong><br>dont include source code</ul><ul><li><strong>true</strong><br>include a button on every page to show the source code.</ul></dd><dt>-v </dt><dd>show version number and exit.</dd><dt>-h </dt><dd>show this help and exit.</dd></dl>
+
+<p></p>
+
+<p> <h2>Note</h2></p>
+
+<p> Docl names the documentation of files relative to the working directory.</p>
+
+<p> If all files to be documented are inside a specific directory, you
+ should change your directory there, before invoking docl.</p>
+
+<p> For example if you are at <code><span class=operator>/</span>home<span class=operator>/</span>james<span class=operator>/</span></code> and you call</p>
+<pre><code style=white-space:pre class=language-lua>$ docl my-programs/my-app/src/lua/*.lua</code></pre>
+
+<p> then docl will name the output files <code>my-programs.my-app.src.lua.*.lua.html</code>
+ (which is pretty dumb).</p>
+
+<p> if you want them to be called only <code>*.lua.html</code> change the
+ directory before invoking docl.</p>
+<pre><code style=white-space:pre class=language-lua>$ cd my-programs/my-app/src/lua
+$ docl *.lua</code></pre>
+
+<p></p>
+
+<p> <h2>Examples</h2></p>
+
+<p></p>
+<pre><code style=white-space:pre class=language-lua>./docl *.lua</code></pre>
+
+<p> document all .lua files in this directory</p>
+
+<p></p>
+<pre><code style=white-space:pre class=language-lua>./docl *.lua */*.lua</code></pre>
+
+<p> document all .lua files in this directory and all subdirectories
+ (but not recursive!)</p>
+
+<p></p>
+<pre><code style=white-space:pre class=language-lua>./docl -d html-doc $$((find -name "*.lua"))</code></pre>
+
+ recursively document all files ending in .lua and put output into <code>html-doc<span class=operator>/</span></code><dl></dl>
   </div><div id=navigation>
-<a href=index.html>> Index</a><h2> Docl - a simple lua documentation for lua code tool</h2><h3> Note</h3><h3> Examples</h3>
+<h2> Command line interface</h2>
   </div><footer style=margin-right>
     generated with docl
-  </footer></body></html>
+  </footer>
+
+<script async src=highlight.js></script></body></html>
