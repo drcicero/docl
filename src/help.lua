@@ -115,11 +115,11 @@ for i,e in ipairs(M.options) do
     or e[3] .. " default is '" .. e[2] .. "'."
 
   table.insert(t,
-      doc.wrap(doc.link(dt:gsub("<", "&lt;")), "dt")
-   .. doc.wrap(doc.link(dd:gsub("<", "&lt;")) .. argdesc, "dd"))
+      doc.wrap(dt:gsub("<", "&lt;"), "dt")
+   .. doc.wrap(dd:gsub("<", "&lt;") .. argdesc, "dd"))
 end
 
-M.webhelp = doc.link(M.help:gsub("<", "&lt;"))
+M.webhelp = M.help:gsub("<", "&lt;")
   :gsub("\n\n", "<p></p>")
   .. "<dl>" .. table.concat(t) .. "</dl>"
 

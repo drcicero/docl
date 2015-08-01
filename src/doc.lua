@@ -5,44 +5,30 @@ doc = require "doc"
 ]]--@RUNHIDDEN
 -- See #doc.parse for how it expects your files to be written.
 
-local highlight = (require "highlight").highlight
+local luahighlight = (require "highlight").highlight
 local repr = (require "repr").repr
 
-local ok,res = pcall(require, "traceback")
-if ok then traceback = res end
 local doc = {}
 
 --- parse a codeblock and return pretty html.
 function doc.codeblock2html (codeblock, env, highlight)
     local code = table.concat(codeblock, "\n")
     local chunk, result = loadstring(code, file) -- "bt")
-    local ok
-    if chunk then
-        setfenv(chunk, env)
-        ok, result = xpcall(chunk, traceback or function (s) return s end)
+    if not chunk then
+        print("  ERROR in line " .. error_line)
+        print("", result)
+        print()
+        return "error", ""
     end
-
+    
+    setfenv(chunk, env)
+    local ok, result = pcall(chunk)
     if not ok then
         local error_line = tonumber(result:match("%[string .*]:(%x+).-") or 0) + codeblock.firstline
         print("  ERROR in line " .. error_line)
         print("", result)
         print()
-        result = result:gsub(".-\n", function (line)
-            if line:match("^ *=") then
-                return highlight(line)
-            else
-                line = line:gsub("<", "&lt;")
-                if line:match("^TRACEBACK") then
-                    line = "<span style=color:red>" .. line:sub(1, -1) .. "</span>"
-                end
-                return line:gsub("\n", "<br>"):gsub("\t", "    "):gsub("  ", "&nbsp; ")
-            end
-        end)
-        return "error", "<pre class=error>" .. result .. "</pre>"
-
-    elseif codeblock.kw == "INSERT_AS_TEXT" then
-        print("  insert in line " .. tostring(codeblock.firstline))
-        return "insert", result
+        return "error", "<pre class=error><code style=white-space:pre>" .. result .. "</code></pre>"
 
     elseif codeblock.kw == "EXPECT" then
         result = repr(result)
@@ -60,6 +46,9 @@ function doc.codeblock2html (codeblock, env, highlight)
         else
             return "success", string
         end
+
+    elseif codeblock.kw == "INSERT_AS_TEXT" then
+        return "insert", result
 
     elseif codeblock.kw == "RUNHIDDEN" then
         return "run", "<pre class=run>" .. highlight(code) .. "</pre>"
@@ -117,7 +106,7 @@ function doc.parse_file (file, links, options)
     -- allow relative requires
     env.package = {path = ("./" .. file):match'(.*/)(.*)' .. "/?.lua;" .. package.path}
 
-    local highlight = options.__highlight == "lua" and highlight or
+    local highlight = options.__highlight == "lua" and luahighlight or
       function (x) return doc.wrap(x:gsub("<", "&lt;"), "code", " style=white-space:pre class=language-lua") end
 
  -- sub functions {
@@ -154,17 +143,17 @@ function doc.parse_file (file, links, options)
 
         function start_doccomment (line)
             if doccomment then end_doccomment("") end
-            doccomment = {first = doc.link(line, links, file, i)}
+            doccomment = {first = doc.link(line, links, file, i, highlight)}
         end
         function continue_doccomment (line)
             if #line==0 then end_docparagraph() end
-            table.insert(doccomment, doc.link(line, links, file, i))
+            table.insert(doccomment, doc.link(line, links, file, i, highlight))
         end
         function end_doccomment (line)
             -- the first doccomment is the section-description
             if not sections[#sections].first then
                 if options.__source == "true" and #sections == 1 then
-                    table.insert(doccomment, doc.source_template(file))
+                    table.insert(doccomment, doc.source_template(file, highlight))
                 end
                 sections[#sections].first = doccomment
 
@@ -301,7 +290,7 @@ end
 --end
 
 --- Generate Sourcecode Drawer
-function doc.source_template(file)
+function doc.source_template(file, highlight)
     local f = io.open(file, "r")
     local content = f:read("*a")
     f:close()
@@ -349,14 +338,11 @@ function doc.file_template(content, navigation, title, options)
 end
 
 --- Link #path.to.something for local references and $path.to.something for references to other files.
-function doc.link (string, links, file, line)
-    local alphanum = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVVWXYZ0123456789"
+function doc.link (string, links, file, line, highlight)
     local result = string
-        :gsub("'(.-)'", function (code)
-            return doc.wrap(highlight(code), "code")
-        end)
+        :gsub("'(.-)'", highlight)
 
-        :gsub("$([" .. alphanum .. "_./#]+)", function (path)
+        :gsub("$([%w_./#]+)", function (path)
             local end_ = ""
             if path:sub(-1) == "." or path:sub(-1) == "/" then
                 path = path:sub(1, -2)
@@ -368,16 +354,6 @@ function doc.link (string, links, file, line)
             return "<a href=" .. link .. ">" .. path .. "</a>" .. end_
         end)
 
---        :gsub("#(["..alphanum.."_./]*)", function (path)
---            local end_ = ""
---            if path:sub(-1) == "." or path:sub(-1) == "/" then
---                path = path:sub(1, -2)
---                end_ = "."
---            end
---            local point = #path -- - path:reverse():find("%.")
---            return "<a href=#" .. path .. ">" .. path .. "</a>" .. end_
---        end)
-
     return result
 end
 
@@ -388,19 +364,10 @@ function doc.wrap(text, element, attr)
     return table.concat {"<", element, attr or "", ">", text, "</", element, ">"}
 end
 
---- Wrap a list of elements with HTML-Element elem.
---[[return doc.wraps({"hallo", "bello", "cello"}, "p")
-]]--@RUN '"<p>hallo</p>\n<p>bello</p>\n<p>cello</p>"'
-function doc.wraps(list, element)
-    local x = table.concat(doc.map(list, doc.wrap, element), "\n")
-    return x
-end
-
 ---- Useful helper functions
 --- Transform elems of list with f.
 --[[return doc.map({1,2,3}, function (x) return x+1 end)
 ]]--@EXPECT {2, 3, 4}
--- <br> [A] (A B... -> C) B... -> [C]
 function doc.map(list, f, ...)
     local result = {}
     for i = 1, #list do
@@ -408,31 +375,5 @@ function doc.map(list, f, ...)
     end
     return result
 end
-
---- Transform values of dict with f.
---[[return doc.kvmap({1, 2, a=5,b=7,c=9}, function (k,v)
-  return "_" .. tostring(k), v+1 end)
-]]--@EXPECT {_1=2, _2=3, _a=6, _b=8, _c=10}
--- <br> {A:B} (A B C... -> D E) C... -> {D:E}
-function doc.kvmap(list, f, ...)
-    local result = {}
-    for k,v in pairs(list) do
-        local k,v = f(k, v, ...)
-        result[k] = v
-    end
-    return result
-end
-
--- Replace every element of list with its key-property.
---[[
---]]--@RUN
---function partial(func, ...)
---    local args = {...}; local len = #args
---    return function(...)
---        local params = {unpack(args)}                      -- copy
---        for i,e in ipairs {...} do params[len + i] = e end -- merge
---        return func(unpack(params))                        -- apply
---    end
---end
 
 return doc

@@ -6,14 +6,14 @@
 ]]
 -- This will download 'docl' to the directory docl.
 --
--- Now go into your source folder. Image you want to put the documentation into
+-- Now go into your source folder. Imagine you want to put the documentation into
 -- the directory doc. First lets create it.
 --[[$ mkdir doc
 ]]
 -- Now run docl on your lua files.
 --[[$ ./path/to/docl/docl --dir doc *.lua
 ]]
--- You should write this line every time you use docl. So lets create a file
+-- You probably dont want to write this line every time you use docl. So lets create a file
 -- called make_docs.sh and write the following into it:
 --[[
 #! /usr/bin/env sh
